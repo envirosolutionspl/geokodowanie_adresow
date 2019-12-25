@@ -260,6 +260,7 @@ class GeokodowanieAdresow:
         self.dlg.cbxUlica.clear()
         self.dlg.cbxNumer.clear()
         self.dlg.cbxKod.clear()
+
         with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
             try:
                 naglowki = plik.readline()
