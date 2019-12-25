@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/plugins/geokodowanie_adresow" >
+        <file>images/icon_uug.png</file>
+    <file>images/icon.png</file>
+    </qresource>
+</RCC>
