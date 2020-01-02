@@ -287,7 +287,6 @@ class GeokodowanieAdresow:
             try:
                 zawartosc = plik.readlines()  # całość jako lista tekstowych linijek
             except UnicodeDecodeError:
-                print("ttt2")
                 return False
 
             naglowek = zawartosc[0]

@@ -8,4 +8,6 @@ Obsługuje pliki tektowe CSV oddzielone przecinkami. Plik może (ale nie musi) z
 miasto,ulica,kod,numer
 Warszawa, Szeligowska, 01-320, 32A
 Marki, Andersa,, 1
+Słupno, Lipowa, 09-472, 4
+Słupno, Lipowa, 05-250, 4
 ```
