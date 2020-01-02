@@ -354,7 +354,7 @@ class GeokodowanieAdresow:
             else:
                 #wszytsko zgeokodowano
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
-                                                    "Zgeokodowano wszystkie %i adresy" % (
+                                                    "Zgeokodowano wszystkie %i adresów" % (
                                                     iloscZgeokodowanych), level=Qgis.Success)
 
     def saveErrors(self, listaWierszy):
