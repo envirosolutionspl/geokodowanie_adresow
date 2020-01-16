@@ -118,7 +118,7 @@ class Ui_GeokodowanieAdresowDialogBase(object):
     def retranslateUi(self, GeokodowanieAdresowDialogBase):
         _translate = QtCore.QCoreApplication.translate
         GeokodowanieAdresowDialogBase.setWindowTitle(_translate("GeokodowanieAdresowDialogBase", "Geokodowanie Adresów"))
-        self.label.setText(_translate("GeokodowanieAdresowDialogBase", "Wybierz plik z adresami"))
+        self.label.setText(_translate("GeokodowanieAdresowDialogBase", "Wybierz plik z adresami (CSV)"))
         self.btnInputFile.setText(_translate("GeokodowanieAdresowDialogBase", "..."))
         self.lblInputFile.setText(_translate("GeokodowanieAdresowDialogBase", "..."))
         self.label_2.setText(_translate("GeokodowanieAdresowDialogBase", "Wskaż plik do zapisu niezgeokodowanych adresów"))

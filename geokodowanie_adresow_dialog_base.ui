@@ -45,7 +45,7 @@
     </font>
    </property>
    <property name="text">
-    <string>Wybierz plik z adresami</string>
+    <string>Wybierz plik z adresami (CSV)</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btnInputFile">
