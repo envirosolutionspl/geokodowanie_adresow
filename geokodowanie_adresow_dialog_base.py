@@ -130,7 +130,7 @@ class Ui_GeokodowanieAdresowDialogBase(object):
         self.label_5.setText(_translate("GeokodowanieAdresowDialogBase", "Numer Porządkowy"))
         self.label_6.setText(_translate("GeokodowanieAdresowDialogBase", "Kod Pocztowy"))
         self.lbl_pluginVersion.setText(_translate("GeokodowanieAdresowDialogBase", "Geokodowanie adresów UUG GUGiK 1.0"))
-        self.lbl_copyrights.setText(_translate("GeokodowanieAdresowDialogBase", "© 2019 <a href=\"http://www.envirosolutions.pl/\">EnviroSolutions Sp. z o.o.</a>"))
+        self.lbl_copyrights.setText(_translate("GeokodowanieAdresowDialogBase", "© 2020 <a href=\"http://www.envirosolutions.pl/\">EnviroSolutions Sp. z o.o.</a>"))
         self.cbxFirstRow.setText(_translate("GeokodowanieAdresowDialogBase", "Pierwszy wiersz zawiera nazwy kolumn"))
         self.lblEncoding.setText(_translate("GeokodowanieAdresowDialogBase", "Kodowanie znaków:"))
 

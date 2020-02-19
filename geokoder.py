@@ -4,8 +4,8 @@ import json
 
 def geocode(miasto, ulica, numer, kod):
     service = "http://services.gugik.gov.pl/uug/?"
-    params = {"request":"GetAddress", "address":"%s, %s, %s %s" % (kod, miasto, ulica, numer)}
-    paramsUrl = urllib.parse.urlencode(params, quote_via=urllib.parse.quote_plus)
+    params = {"request":"GetAddress", "address":"%s %s, %s %s" % (kod, miasto, ulica, numer)}
+    paramsUrl = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
     request = urllib.request.Request(service + paramsUrl)
     # print(service + paramsUrl)
     response = urllib.request.urlopen(request).read()

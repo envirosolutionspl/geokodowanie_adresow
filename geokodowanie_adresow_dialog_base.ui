@@ -222,7 +222,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>© 2019 &lt;a href=&quot;http://www.envirosolutions.pl/&quot;&gt;EnviroSolutions Sp. z o.o.&lt;/a&gt;</string>
+    <string>© 2020 &lt;a href=&quot;http://www.envirosolutions.pl/&quot;&gt;EnviroSolutions Sp. z o.o.&lt;/a&gt;</string>
    </property>
    <property name="textFormat">
     <enum>Qt::RichText</enum>
