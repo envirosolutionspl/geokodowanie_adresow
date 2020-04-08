@@ -20,9 +20,14 @@ repository=https://github.com/envirosolutionspl/geokodowanie_uug
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=1.1.1 - poprawy błędów, rozwinięcie skrótów al. i pl. w nazwach ulic w celu zwiększenia skuteczności
-1.1.0 - dodanie możliwości definicji separatora kolumn
-
+changelog=
+  Version 1.1.1
+  * poprawy błędów
+  * rozwinięcie skrótów al. i pl. w nazwach ulic w celu zwiększenia skuteczności
+  Version 1.1.0
+  * dodanie możliwości definicji separatora kolumn
+  * poprawy błędów
+  
 # Tags are comma separated with spaces allowed
 tags=python
 
