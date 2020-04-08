@@ -2,19 +2,18 @@
 
 # Form implementation generated from reading ui file 'geokodowanie_adresow_dialog_base.ui'
 #
-# Created by: PyQt5 UI code generator 5.12.1
+# Created by: PyQt5 UI code generator 5.11.3
 #
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-
 class Ui_GeokodowanieAdresowDialogBase(object):
     def setupUi(self, GeokodowanieAdresowDialogBase):
         GeokodowanieAdresowDialogBase.setObjectName("GeokodowanieAdresowDialogBase")
-        GeokodowanieAdresowDialogBase.resize(531, 461)
+        GeokodowanieAdresowDialogBase.resize(531, 504)
         self.button_box = QtWidgets.QDialogButtonBox(GeokodowanieAdresowDialogBase)
-        self.button_box.setGeometry(QtCore.QRect(390, 370, 111, 32))
+        self.button_box.setGeometry(QtCore.QRect(390, 410, 111, 32))
         self.button_box.setOrientation(QtCore.Qt.Horizontal)
         self.button_box.setStandardButtons(QtWidgets.QDialogButtonBox.Close)
         self.button_box.setObjectName("button_box")
@@ -46,10 +45,10 @@ class Ui_GeokodowanieAdresowDialogBase(object):
         self.lblOutputFile.setObjectName("lblOutputFile")
         self.btnGeokoduj = QtWidgets.QPushButton(GeokodowanieAdresowDialogBase)
         self.btnGeokoduj.setEnabled(False)
-        self.btnGeokoduj.setGeometry(QtCore.QRect(410, 310, 93, 28))
+        self.btnGeokoduj.setGeometry(QtCore.QRect(410, 350, 93, 28))
         self.btnGeokoduj.setObjectName("btnGeokoduj")
         self.layoutWidget = QtWidgets.QWidget(GeokodowanieAdresowDialogBase)
-        self.layoutWidget.setGeometry(QtCore.QRect(140, 260, 231, 141))
+        self.layoutWidget.setGeometry(QtCore.QRect(140, 300, 231, 141))
         self.layoutWidget.setObjectName("layoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -67,7 +66,7 @@ class Ui_GeokodowanieAdresowDialogBase(object):
         self.cbxKod.setObjectName("cbxKod")
         self.verticalLayout.addWidget(self.cbxKod)
         self.layoutWidget1 = QtWidgets.QWidget(GeokodowanieAdresowDialogBase)
-        self.layoutWidget1.setGeometry(QtCore.QRect(20, 260, 121, 141))
+        self.layoutWidget1.setGeometry(QtCore.QRect(20, 300, 121, 141))
         self.layoutWidget1.setObjectName("layoutWidget1")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.layoutWidget1)
         self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
@@ -85,10 +84,10 @@ class Ui_GeokodowanieAdresowDialogBase(object):
         self.label_6.setObjectName("label_6")
         self.verticalLayout_2.addWidget(self.label_6)
         self.lbl_pluginVersion = QtWidgets.QLabel(GeokodowanieAdresowDialogBase)
-        self.lbl_pluginVersion.setGeometry(QtCore.QRect(20, 430, 241, 20))
+        self.lbl_pluginVersion.setGeometry(QtCore.QRect(20, 470, 241, 20))
         self.lbl_pluginVersion.setObjectName("lbl_pluginVersion")
         self.lbl_copyrights = QtWidgets.QLabel(GeokodowanieAdresowDialogBase)
-        self.lbl_copyrights.setGeometry(QtCore.QRect(310, 430, 201, 20))
+        self.lbl_copyrights.setGeometry(QtCore.QRect(310, 470, 201, 20))
         self.lbl_copyrights.setTextFormat(QtCore.Qt.RichText)
         self.lbl_copyrights.setOpenExternalLinks(True)
         self.lbl_copyrights.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
@@ -100,15 +99,25 @@ class Ui_GeokodowanieAdresowDialogBase(object):
         self.img_main.setScaledContents(True)
         self.img_main.setObjectName("img_main")
         self.cbxFirstRow = QtWidgets.QCheckBox(GeokodowanieAdresowDialogBase)
-        self.cbxFirstRow.setGeometry(QtCore.QRect(20, 210, 331, 20))
+        self.cbxFirstRow.setGeometry(QtCore.QRect(20, 260, 331, 20))
         self.cbxFirstRow.setChecked(True)
         self.cbxFirstRow.setObjectName("cbxFirstRow")
         self.lblEncoding = QtWidgets.QLabel(GeokodowanieAdresowDialogBase)
-        self.lblEncoding.setGeometry(QtCore.QRect(20, 170, 121, 16))
+        self.lblEncoding.setGeometry(QtCore.QRect(18, 170, 121, 21))
         self.lblEncoding.setObjectName("lblEncoding")
         self.cbxEncoding = QtWidgets.QComboBox(GeokodowanieAdresowDialogBase)
-        self.cbxEncoding.setGeometry(QtCore.QRect(160, 170, 111, 22))
+        self.cbxEncoding.setGeometry(QtCore.QRect(158, 170, 111, 22))
         self.cbxEncoding.setObjectName("cbxEncoding")
+        self.label_7 = QtWidgets.QLabel(GeokodowanieAdresowDialogBase)
+        self.label_7.setGeometry(QtCore.QRect(18, 210, 181, 21))
+        self.label_7.setObjectName("label_7")
+        self.led_symbol = QtWidgets.QLineEdit(GeokodowanieAdresowDialogBase)
+        self.led_symbol.setGeometry(QtCore.QRect(240, 210, 31, 22))
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.led_symbol.setFont(font)
+        self.led_symbol.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
+        self.led_symbol.setObjectName("led_symbol")
 
         self.retranslateUi(GeokodowanieAdresowDialogBase)
         self.button_box.accepted.connect(GeokodowanieAdresowDialogBase.accept)
@@ -133,5 +142,6 @@ class Ui_GeokodowanieAdresowDialogBase(object):
         self.lbl_copyrights.setText(_translate("GeokodowanieAdresowDialogBase", "© 2020 <a href=\"http://www.envirosolutions.pl/\">EnviroSolutions Sp. z o.o.</a>"))
         self.cbxFirstRow.setText(_translate("GeokodowanieAdresowDialogBase", "Pierwszy wiersz zawiera nazwy kolumn"))
         self.lblEncoding.setText(_translate("GeokodowanieAdresowDialogBase", "Kodowanie znaków:"))
-
+        self.label_7.setText(_translate("GeokodowanieAdresowDialogBase", "Znak rozdzielający kolumny"))
+        self.led_symbol.setText(_translate("GeokodowanieAdresowDialogBase", ","))
 

@@ -36,7 +36,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 import os.path
 
 """Wersja wtyczki"""
-plugin_version = '1.0.2'
+plugin_version = '1.1.0'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 class GeokodowanieAdresow:
@@ -206,6 +206,8 @@ class GeokodowanieAdresow:
             self.dlg.btnInputFile.clicked.connect(self.openInputFile)
             self.dlg.btnOutputFile.clicked.connect(self.saveOutputFile)
             self.dlg.btnGeokoduj.clicked.connect(self.parseCsv)
+            self.dlg.led_symbol.textChanged.connect(self.led_symbol_changed)
+            self.dlg.led_symbol.editingFinished.connect(self.readHeader)
             self.isInputFile = False
             self.isOutputFile = False
 
@@ -214,6 +216,8 @@ class GeokodowanieAdresow:
             print(utf8Id)
             self.dlg.cbxEncoding.setCurrentIndex(utf8Id)
             self.dlg.cbxEncoding.currentIndexChanged.connect(self.readHeader)
+
+            self.led_symbol_changed()
 
             # Inicjacja grafik
             self.dlg.img_main.setPixmap(QPixmap(':/plugins/geokodowanie_adresow/images/icon_uug.png'))
@@ -260,21 +264,21 @@ class GeokodowanieAdresow:
         self.dlg.cbxUlica.clear()
         self.dlg.cbxNumer.clear()
         self.dlg.cbxKod.clear()
-
-        with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
-            try:
-                naglowki = plik.readline()
-            except UnicodeDecodeError:
-                self.iface.messageBar().pushMessage("Błąd kodowania:","Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie", level=Qgis.Warning)
-                return False
-            elementyNaglowkow = naglowki.split(",")
-            elementyNaglowkow = [x.strip() for x in elementyNaglowkow] #usuwa biale znaki dla kazdego elementu listy
-            elementyNaglowkow.insert(0,"")
-            # wczytywanie listy nagłówków do ComboBoxów
-            self.dlg.cbxMiejscowosc.addItems(elementyNaglowkow)
-            self.dlg.cbxUlica.addItems(elementyNaglowkow)
-            self.dlg.cbxNumer.addItems(elementyNaglowkow)
-            self.dlg.cbxKod.addItems(elementyNaglowkow)
+        if self.isInputFile:
+            with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+                try:
+                    naglowki = plik.readline()
+                except UnicodeDecodeError:
+                    self.iface.messageBar().pushMessage("Błąd kodowania:","Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie", level=Qgis.Warning)
+                    return False
+                elementyNaglowkow = naglowki.split(self.delimeter)
+                elementyNaglowkow = [x.strip() for x in elementyNaglowkow] #usuwa biale znaki dla kazdego elementu listy
+                elementyNaglowkow.insert(0,"")
+                # wczytywanie listy nagłówków do ComboBoxów
+                self.dlg.cbxMiejscowosc.addItems(elementyNaglowkow)
+                self.dlg.cbxUlica.addItems(elementyNaglowkow)
+                self.dlg.cbxNumer.addItems(elementyNaglowkow)
+                self.dlg.cbxKod.addItems(elementyNaglowkow)
 
     def parseCsv(self):
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
@@ -302,7 +306,7 @@ class GeokodowanieAdresow:
             features = []
             bledne = []
             for rekord in rekordy:  # rekord:
-                wartosci = rekord.split(",")  # lista wartosci w ramach jednego rekordu
+                wartosci = rekord.split(self.delimeter)  # lista wartosci w ramach jednego rekordu
                 wartosci = [x.strip() for x in wartosci]
                 miejcowosc, ulica, numer, kod = "", "", "", ""
                 if idMiejscowosc:
@@ -332,7 +336,7 @@ class GeokodowanieAdresow:
                     features.append(feat)
                 else:
                     #dodaj do pliku z błędami
-                    bledne.append("%s,%s,%s,%s\n" % (wartosci[0], wartosci[1], wartosci[2], wartosci[3]))
+                    bledne.append(self.delimieter.join(wartosci)+"\n")
 
             warstwa.dataProvider().addFeatures(features)
             warstwa.updateExtents()
@@ -361,6 +365,11 @@ class GeokodowanieAdresow:
         with open(self.outputPlik, 'w') as plik:
             plik.writelines(listaWierszy)
 
+
+    def led_symbol_changed(self):
+        self.delimeter = self.dlg.led_symbol.text().strip()
+        if self.delimeter == '':
+            self.delimeter = ','
 
 
 
