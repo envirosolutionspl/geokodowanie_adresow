@@ -2,6 +2,7 @@ import urllib.request
 import urllib.parse
 import json
 
+
 def geocode(miasto, ulica, numer, kod):
     service = "http://services.gugik.gov.pl/uug/?"
     params = {"request":"GetAddress", "address":"%s %s, %s %s" % (kod, miasto, ulica, numer)}
@@ -22,6 +23,7 @@ def geocode(miasto, ulica, numer, kod):
     except KeyError:
         print(w)
         return (str(w),0)
+
 
 if __name__ == '__main__':
     g = geocode(miasto='Słupno', ulica='Lipowa', numer='4', kod='09-472')

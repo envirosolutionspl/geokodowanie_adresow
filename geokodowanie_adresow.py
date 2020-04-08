@@ -28,6 +28,7 @@ from qgis.core import *
 from PyQt5.QtWidgets import QFileDialog
 from . import geokoder
 from . import encoding
+import re
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -36,7 +37,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 import os.path
 
 """Wersja wtyczki"""
-plugin_version = '1.1.0'
+plugin_version = '1.1.1'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 class GeokodowanieAdresow:
@@ -50,6 +51,7 @@ class GeokodowanieAdresow:
             application at run time.
         :type iface: QgsInterface
         """
+        self.pattern = None
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
@@ -312,9 +314,9 @@ class GeokodowanieAdresow:
                 if idMiejscowosc:
                     miejcowosc = wartosci[idMiejscowosc - 1]
                 if idUlica:
-                    ulica = wartosci[idUlica - 1]
+                    ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
                 if idNumer:
-                    numer = wartosci[idNumer - 1]
+                    numer = wartosci[idNumer - 1].upper()
                 if idKod:
                     kod = wartosci[idKod - 1]
 
@@ -336,7 +338,7 @@ class GeokodowanieAdresow:
                     features.append(feat)
                 else:
                     #dodaj do pliku z błędami
-                    bledne.append(self.delimieter.join(wartosci)+"\n")
+                    bledne.append(self.delimeter.join(wartosci)+"\n")
 
             warstwa.dataProvider().addFeatures(features)
             warstwa.updateExtents()
@@ -365,6 +367,13 @@ class GeokodowanieAdresow:
         with open(self.outputPlik, 'w') as plik:
             plik.writelines(listaWierszy)
 
+    def dealWithAbbreviations(self, text):
+        rep = {"al.": "aleje", "Al.": "Aleje", "Pl.": "Plac", "pl.": "plac"}
+        rep = dict((re.escape(k), v) for k, v in rep.items())
+        if not self.pattern:
+            self.pattern = re.compile("|".join(rep.keys()))
+        text = self.pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
+        return text
 
     def led_symbol_changed(self):
         self.delimeter = self.dlg.led_symbol.text().strip()
