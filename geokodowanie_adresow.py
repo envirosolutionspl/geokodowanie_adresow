@@ -37,7 +37,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 import os.path
 
 """Wersja wtyczki"""
-plugin_version = '1.1.1'
+plugin_version = '1.1.2'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 class GeokodowanieAdresow:
@@ -215,7 +215,6 @@ class GeokodowanieAdresow:
 
             self.dlg.cbxEncoding.addItems(encoding.encodings)
             utf8Id = self.dlg.cbxEncoding.findText('utf_8')
-            print(utf8Id)
             self.dlg.cbxEncoding.setCurrentIndex(utf8Id)
             self.dlg.cbxEncoding.currentIndexChanged.connect(self.readHeader)
 
@@ -287,16 +286,15 @@ class GeokodowanieAdresow:
         for rekord in rekordy:  # rekord:
             wartosci = rekord.split(self.delimeter)  # lista wartosci w ramach jednego rekordu
             wartosci = [x.strip() for x in wartosci]
-            miejcowosc, ulica, numer, kod = "", "", "", ""
             try:
                 if idMiejscowosc:
-                    miejcowosc = wartosci[idMiejscowosc - 1]
+                    wartosci[idMiejscowosc - 1]
                 if idUlica:
-                    ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
+                    wartosci[idUlica - 1]
                 if idNumer:
-                    numer = wartosci[idNumer - 1].upper()
+                    wartosci[idNumer - 1]
                 if idKod:
-                    kod = wartosci[idKod - 1]
+                    wartosci[idKod - 1]
             except IndexError:
                 self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
                                                     "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
@@ -304,6 +302,19 @@ class GeokodowanieAdresow:
                 return False # wystąpiły błędy
         return True  # poprawnie wczytano wszystkie wiersze
 
+    def createEmptyLayer(self, headings, hasHeadings=True):
+        fields = ''
+        if hasHeadings:
+            for heading in headings:
+                fields += "&field=%s:string(0,-1)" % heading
+        else:
+            for i in range(len(headings)):
+                fields += "&field=pole%i:string(0,-1)" % (i+1)
+
+        warstwa = QgsVectorLayer(
+            "Point?crs=EPSG:2180" + fields
+            , "zgeokodowane", "memory")
+        return warstwa
 
     def parseCsv(self):
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
@@ -319,41 +330,45 @@ class GeokodowanieAdresow:
                 return False
 
             naglowek = zawartosc[0]
+            naglowki = naglowek.split(self.delimeter)  # lista wartosci w ramach naglowka
+            naglowki = [x.strip() for x in naglowki]
+
             if self.dlg.cbxFirstRow.isChecked():
                 rekordy = zawartosc[1:]
+                warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=True)
             else:
                 rekordy = zawartosc[:]
+                rekordy[0] = rekordy[0][1:] #usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
+                warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
 
-            warstwa = QgsVectorLayer("Point?crs=EPSG:2180&field=miasto:string(50,-1)&field=kod:string(10,-1)&field=ulica:string(50,-1)&field=numer:string(10,-1)"
-                                     ,"zgeokodowane","memory")
+            # sprawdzenie czy plik CSV jest poprawny
+            if not self.csvCheck(rekordy,idMiejscowosc,idUlica,idNumer,idKod):
+                return False
+
+
 
 
             features = []
             bledne = []
 
-            if not self.csvCheck(rekordy,idMiejscowosc,idUlica,idNumer,idKod):
-                return False
+
 
             for rekord in rekordy:  # rekord:
                 wartosci = rekord.split(self.delimeter)  # lista wartosci w ramach jednego rekordu
                 wartosci = [x.strip() for x in wartosci]
-                miejcowosc, ulica, numer, kod = "", "", "", ""
-                try:
-                    if idMiejscowosc:
-                        miejcowosc = wartosci[idMiejscowosc - 1]
-                    if idUlica:
-                        ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
-                    if idNumer:
-                        numer = wartosci[idNumer - 1].upper()
-                    if idKod:
-                        kod = wartosci[idKod - 1]
-                except IndexError:
-                    self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
-                                                        "w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
-                                                        level=Qgis.Critical, duration=60)
+                miejscowosc, ulica, numer, kod = "", "", "", ""
 
+                if idMiejscowosc:
+                    miejscowosc = wartosci[idMiejscowosc - 1]
+                if idUlica:
+                    ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
+                if idNumer:
+                    numer = wartosci[idNumer - 1].upper()
+                if idKod:
+                    kod = wartosci[idKod - 1]
 
-                wkt = geokoder.geocode(miasto=miejcowosc, ulica=ulica, numer=numer, kod=kod)
+                print("geocoding: ",miejscowosc,ulica,numer, kod)
+                wkt = geokoder.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod=kod)
                 if isinstance(wkt,tuple):
                     #błąd serwera
                     response = wkt[0]
@@ -367,7 +382,7 @@ class GeokodowanieAdresow:
                     geom = QgsGeometry().fromWkt(wkt)
                     feat = QgsFeature()
                     feat.setGeometry(geom)
-                    feat.setAttributes([miejcowosc, kod, ulica, numer])
+                    feat.setAttributes(wartosci)
                     features.append(feat)
                 else:
                     #dodaj do pliku z błędami
