@@ -282,6 +282,29 @@ class GeokodowanieAdresow:
                 self.dlg.cbxNumer.addItems(elementyNaglowkow)
                 self.dlg.cbxKod.addItems(elementyNaglowkow)
 
+    def csvCheck(self, rekordy, idMiejscowosc, idUlica, idNumer, idKod):
+        """Sprawdzenie poprawności CSV"""
+        for rekord in rekordy:  # rekord:
+            wartosci = rekord.split(self.delimeter)  # lista wartosci w ramach jednego rekordu
+            wartosci = [x.strip() for x in wartosci]
+            miejcowosc, ulica, numer, kod = "", "", "", ""
+            try:
+                if idMiejscowosc:
+                    miejcowosc = wartosci[idMiejscowosc - 1]
+                if idUlica:
+                    ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
+                if idNumer:
+                    numer = wartosci[idNumer - 1].upper()
+                if idKod:
+                    kod = wartosci[idKod - 1]
+            except IndexError:
+                self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
+                                                    "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
+                                                    level=Qgis.Critical, duration=20)
+                return False # wystąpiły błędy
+        return True  # poprawnie wczytano wszystkie wiersze
+
+
     def parseCsv(self):
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
@@ -307,18 +330,28 @@ class GeokodowanieAdresow:
 
             features = []
             bledne = []
+
+            if not self.csvCheck(rekordy,idMiejscowosc,idUlica,idNumer,idKod):
+                return False
+
             for rekord in rekordy:  # rekord:
                 wartosci = rekord.split(self.delimeter)  # lista wartosci w ramach jednego rekordu
                 wartosci = [x.strip() for x in wartosci]
                 miejcowosc, ulica, numer, kod = "", "", "", ""
-                if idMiejscowosc:
-                    miejcowosc = wartosci[idMiejscowosc - 1]
-                if idUlica:
-                    ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
-                if idNumer:
-                    numer = wartosci[idNumer - 1].upper()
-                if idKod:
-                    kod = wartosci[idKod - 1]
+                try:
+                    if idMiejscowosc:
+                        miejcowosc = wartosci[idMiejscowosc - 1]
+                    if idUlica:
+                        ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
+                    if idNumer:
+                        numer = wartosci[idNumer - 1].upper()
+                    if idKod:
+                        kod = wartosci[idKod - 1]
+                except IndexError:
+                    self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
+                                                        "w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
+                                                        level=Qgis.Critical, duration=60)
+
 
                 wkt = geokoder.geocode(miasto=miejcowosc, ulica=ulica, numer=numer, kod=kod)
                 if isinstance(wkt,tuple):
