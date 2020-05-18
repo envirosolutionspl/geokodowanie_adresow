@@ -5,10 +5,13 @@ import json
 
 def geocode(miasto, ulica, numer, kod):
     service = "http://services.gugik.gov.pl/uug/?"
-    params = {"request":"GetAddress", "address":"%s %s, %s %s" % (kod, miasto, ulica, numer)}
+    if ulica.strip() == '' or ulica.strip() == miasto.strip():
+        params = {"request": "GetAddress", "address": "%s %s %s" % (kod, miasto, numer)}
+    else:
+        params = {"request":"GetAddress", "address":"%s %s, %s %s" % (kod, miasto, ulica, numer)}
     paramsUrl = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
     request = urllib.request.Request(service + paramsUrl)
-    # print(service + paramsUrl)
+    print(service + paramsUrl)
     response = urllib.request.urlopen(request).read()
     js = response.decode("utf-8") #pobrany, zdekodowany plik json z odpowiedzia z serwera
     w = json.loads(js)

@@ -23,7 +23,7 @@
 """
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QToolBar
+from qgis.PyQt.QtWidgets import QAction, QToolBar, QProgressDialog
 from qgis.core import *
 from PyQt5.QtWidgets import QFileDialog
 from . import geokoder
@@ -37,7 +37,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 import os.path
 
 """Wersja wtyczki"""
-plugin_version = '1.1.2'
+plugin_version = '1.1.3'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 class GeokodowanieAdresow:
@@ -51,6 +51,8 @@ class GeokodowanieAdresow:
             application at run time.
         :type iface: QgsInterface
         """
+
+
         self.pattern = None
         # Save reference to the QGIS interface
         self.iface = iface
@@ -317,6 +319,7 @@ class GeokodowanieAdresow:
         return warstwa
 
     def parseCsv(self):
+
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
         idNumer = self.dlg.cbxNumer.currentIndex()
@@ -410,6 +413,7 @@ class GeokodowanieAdresow:
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
                                                     "Zgeokodowano wszystkie %i adresów" % (
                                                     iloscZgeokodowanych), level=Qgis.Success)
+
 
     def saveErrors(self, listaWierszy):
         with open(self.outputPlik, 'w') as plik:

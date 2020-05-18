@@ -4,7 +4,12 @@ EN: QGIS 3 Plugin for geocoding addresses of Poland from CSV file. PL: Wtyczka g
 Wtyczka geokoduje polskie adresy na warstwę punktową w QGIS.
 Obsługuje pliki tektowe CSV oddzielone przecinkami. Plik może (ale nie musi) zawierać nagłówki.
 
+####Uwaga 
+Dla niektórych adresó brak jest kodów pocztowych w bazie GUGiK, należy wtedy użyć 00-000 lub wartości pustej
 ## changelog
+  Version 1.1.3
+  * wyszukuje adresy 'wiejskie' gdy nazwa ulicy jest pusta lub taka jak miejscowość
+  
   Version 1.1.2
   * dodanie wszystkich pól z pliku wejściowego w warstwie wynikowej
   * sprawdzanie całego pliku z adresami przed rozpoczeciem geokodowania
