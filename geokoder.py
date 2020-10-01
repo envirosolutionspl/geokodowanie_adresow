@@ -35,3 +35,7 @@ if __name__ == '__main__':
     print(g)
     g = geocode(miasto='Słupno', ulica='Lipowa', numer='4', kod='')
     print(g)
+    g = geocode(miasto='Opole', ulica='Opolska', numer='34', kod='45-960')
+    print(g)
+    g = geocode(miasto='Opole', ulica='Edmunda Osmańczyka', numer='20', kod='45-027')
+    print(g)

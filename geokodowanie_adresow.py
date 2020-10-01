@@ -37,8 +37,9 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 import os.path
 
 """Wersja wtyczki"""
-plugin_version = '1.1.3'
+plugin_version = '1.1.4'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
+
 
 class GeokodowanieAdresow:
     """QGIS Plugin Implementation."""
@@ -51,7 +52,6 @@ class GeokodowanieAdresow:
             application at run time.
         :type iface: QgsInterface
         """
-
 
         self.pattern = None
         # Save reference to the QGIS interface
@@ -74,7 +74,7 @@ class GeokodowanieAdresow:
         self.actions = []
         self.menu = self.tr(u'&EnviroSolutions')
 
-        #toolbar
+        # toolbar
         self.toolbar = self.iface.mainWindow().findChild(QToolBar, 'EnviroSolutions')
         if not self.toolbar:
             self.toolbar = self.iface.addToolBar(u'EnviroSolutions')
@@ -99,18 +99,17 @@ class GeokodowanieAdresow:
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeokodowanieAdresow', message)
 
-
     def add_action(
-        self,
-        icon_path,
-        text,
-        callback,
-        enabled_flag=True,
-        add_to_menu=True,
-        add_to_toolbar=True,
-        status_tip=None,
-        whats_this=None,
-        parent=None):
+            self,
+            icon_path,
+            text,
+            callback,
+            enabled_flag=True,
+            add_to_menu=True,
+            add_to_toolbar=True,
+            status_tip=None,
+            whats_this=None,
+            parent=None):
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -163,7 +162,7 @@ class GeokodowanieAdresow:
 
         if add_to_toolbar:
             # Adds plugin icon to Plugins toolbar
-            #self.iface.addToolBarIcon(action)
+            # self.iface.addToolBarIcon(action)
             self.toolbar.addAction(action)
 
         if add_to_menu:
@@ -188,7 +187,6 @@ class GeokodowanieAdresow:
         # will be set False in run()
         self.first_start = True
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -197,7 +195,6 @@ class GeokodowanieAdresow:
                 action)
             # self.iface.removeToolBarIcon(action)
             self.toolbar.removeAction(action)
-
 
     def run(self):
         """Run method that performs all the real work"""
@@ -252,7 +249,6 @@ class GeokodowanieAdresow:
 
             self.readHeader()
 
-
     def saveOutputFile(self):
         self.outputPlik = QFileDialog.getSaveFileName(filter="Pliki tekstowe (*.txt)")[0]
         if self.outputPlik != '':
@@ -272,11 +268,14 @@ class GeokodowanieAdresow:
                 try:
                     naglowki = plik.readline()
                 except UnicodeDecodeError:
-                    self.iface.messageBar().pushMessage("Błąd kodowania:","Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie", level=Qgis.Warning)
+                    self.iface.messageBar().pushMessage("Błąd kodowania:",
+                                                        "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie",
+                                                        level=Qgis.Warning)
                     return False
                 elementyNaglowkow = naglowki.split(self.delimeter)
-                elementyNaglowkow = [x.strip() for x in elementyNaglowkow] #usuwa biale znaki dla kazdego elementu listy
-                elementyNaglowkow.insert(0,"")
+                elementyNaglowkow = [x.strip() for x in
+                                     elementyNaglowkow]  # usuwa biale znaki dla kazdego elementu listy
+                elementyNaglowkow.insert(0, "")
                 # wczytywanie listy nagłówków do ComboBoxów
                 self.dlg.cbxMiejscowosc.addItems(elementyNaglowkow)
                 self.dlg.cbxUlica.addItems(elementyNaglowkow)
@@ -301,7 +300,7 @@ class GeokodowanieAdresow:
                 self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
                                                     "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
                                                     level=Qgis.Critical, duration=20)
-                return False # wystąpiły błędy
+                return False  # wystąpiły błędy
         return True  # poprawnie wczytano wszystkie wiersze
 
     def createEmptyLayer(self, headings, hasHeadings=True):
@@ -311,7 +310,7 @@ class GeokodowanieAdresow:
                 fields += "&field=%s:string(0,-1)" % heading
         else:
             for i in range(len(headings)):
-                fields += "&field=pole%i:string(0,-1)" % (i+1)
+                fields += "&field=pole%i:string(0,-1)" % (i + 1)
 
         warstwa = QgsVectorLayer(
             "Point?crs=EPSG:2180" + fields
@@ -341,20 +340,15 @@ class GeokodowanieAdresow:
                 warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=True)
             else:
                 rekordy = zawartosc[:]
-                rekordy[0] = rekordy[0][1:] #usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
+                rekordy[0] = rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
                 warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
 
             # sprawdzenie czy plik CSV jest poprawny
-            if not self.csvCheck(rekordy,idMiejscowosc,idUlica,idNumer,idKod):
+            if not self.csvCheck(rekordy, idMiejscowosc, idUlica, idNumer, idKod):
                 return False
-
-
-
 
             features = []
             bledne = []
-
-
 
             for rekord in rekordy:  # rekord:
                 wartosci = rekord.split(self.delimeter)  # lista wartosci w ramach jednego rekordu
@@ -370,26 +364,31 @@ class GeokodowanieAdresow:
                 if idKod:
                     kod = wartosci[idKod - 1]
 
-                print("geocoding: ",miejscowosc,ulica,numer, kod)
+                print("geocoding: ", miejscowosc, ulica, numer, kod)
                 wkt = geokoder.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod=kod)
-                if isinstance(wkt,tuple):
-                    #błąd serwera
+                if wkt is None and kod.strip() != '':
+                    # spróbuj jeszcze raz bez kodu pocztowego
+                    print("geocoding without zip: ", miejscowosc, ulica, numer, kod)
+                    wkt = geokoder.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod='')
+                if wkt is None:
+                    # dodaj do pliku z błędami
+                    bledne.append(self.delimeter.join(wartosci) + "\n")
+                elif isinstance(wkt, tuple):
+                    # błąd serwera
                     response = wkt[0]
                     self.iface.messageBar().pushMessage("Błąd. Odpowiedź serwera GUGiK:",
                                                         response,
                                                         level=Qgis.Critical, duration=20)
                     return False
 
-                elif wkt is not None:
-                    #twórz obiekt punktowy
+                else:
+                    # twórz obiekt punktowy
                     geom = QgsGeometry().fromWkt(wkt)
                     feat = QgsFeature()
                     feat.setGeometry(geom)
                     feat.setAttributes(wartosci)
                     features.append(feat)
-                else:
-                    #dodaj do pliku z błędami
-                    bledne.append(self.delimeter.join(wartosci)+"\n")
+
 
             warstwa.dataProvider().addFeatures(features)
             warstwa.updateExtents()
@@ -397,23 +396,22 @@ class GeokodowanieAdresow:
 
             iloscZgeokodowanych = len(features)
 
-            #zapisanie blednych adresow do pliku
-            if bledne: #jezeli cokolwiek zapisalo sie do listy bledne
+            # zapisanie blednych adresow do pliku
+            if bledne:  # jezeli cokolwiek zapisalo sie do listy bledne
                 iloscBledow = len(bledne)
 
-                bledne.insert(0,naglowek)
+                bledne.insert(0, naglowek)
                 self.saveErrors(bledne)
 
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
                                                     "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
-                                                        iloscZgeokodowanych,iloscBledow + iloscZgeokodowanych,
-                                                        self.outputPlik),level=Qgis.Warning)
+                                                        iloscZgeokodowanych, iloscBledow + iloscZgeokodowanych,
+                                                        self.outputPlik), level=Qgis.Warning)
             else:
-                #wszytsko zgeokodowano
+                # wszytsko zgeokodowano
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
                                                     "Zgeokodowano wszystkie %i adresów" % (
-                                                    iloscZgeokodowanych), level=Qgis.Success)
-
+                                                        iloscZgeokodowanych), level=Qgis.Success)
 
     def saveErrors(self, listaWierszy):
         with open(self.outputPlik, 'w') as plik:
@@ -431,6 +429,3 @@ class GeokodowanieAdresow:
         self.delimeter = self.dlg.led_symbol.text().strip()
         if self.delimeter == '':
             self.delimeter = ','
-
-
-
