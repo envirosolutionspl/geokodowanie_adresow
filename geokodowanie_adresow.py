@@ -37,7 +37,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 import os.path
 
 """Wersja wtyczki"""
-plugin_version = '1.1.5'
+plugin_version = '1.1.6'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 
@@ -52,8 +52,9 @@ class GeokodowanieAdresow:
             application at run time.
         :type iface: QgsInterface
         """
-        from .qgis_feed import QgisFeed
+
         if Qgis.QGIS_VERSION_INT >= 31000:
+            from .qgis_feed import QgisFeed
             self.feed = QgisFeed()
             self.feed.initFeed()
 
