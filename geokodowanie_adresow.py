@@ -276,7 +276,7 @@ class GeokodowanieAdresow:
                 except UnicodeDecodeError:
                     self.iface.messageBar().pushMessage("Błąd kodowania:",
                                                         "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie",
-                                                        level=Qgis.Warning)
+                                                        level=Qgis.Warning, duration=5)
                     return False
                 elementyNaglowkow = naglowki.split(self.delimeter)
                 elementyNaglowkow = [x.strip() for x in
@@ -305,7 +305,7 @@ class GeokodowanieAdresow:
             except IndexError:
                 self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
                                                     "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
-                                                    level=Qgis.Critical, duration=20)
+                                                    level=Qgis.Critical, duration=5)
                 return False  # wystąpiły błędy
         return True  # poprawnie wczytano wszystkie wiersze
 
@@ -370,11 +370,11 @@ class GeokodowanieAdresow:
                 if idKod:
                     kod = wartosci[idKod - 1]
 
-                print("geocoding: ", miejscowosc, ulica, numer, kod)
-                wkt = self.geokodowanie.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod=kod, kodowanie=self.dlg.cbxEncoding.currentText())
+                # print("geocoding: ", miejscowosc, ulica, numer, kod)
+                wkt = self.geokodowanie.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod=kod)
                 if wkt is None and kod.strip() != '':
                     # spróbuj jeszcze raz bez kodu pocztowego
-                    print("geocoding without zip: ", miejscowosc, ulica, numer, kod)
+                    # print("geocoding without zip: ", miejscowosc, ulica, numer, kod)
                     wkt = self.geokodowanie.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod='')
                 if wkt is None:
                     # dodaj do pliku z błędami
@@ -384,8 +384,8 @@ class GeokodowanieAdresow:
                     response = wkt[0]
                     self.iface.messageBar().pushMessage("Błąd. Odpowiedź serwera GUGiK:",
                                                         response,
-                                                        level=Qgis.Critical, duration=20)
-                    return False
+                                                        level=Qgis.Critical, duration=5)
+                    break
 
                 else:
                     # twórz obiekt punktowy
@@ -412,12 +412,12 @@ class GeokodowanieAdresow:
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
                                                     "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
                                                         iloscZgeokodowanych, iloscBledow + iloscZgeokodowanych,
-                                                        self.outputPlik), level=Qgis.Warning)
+                                                        self.outputPlik), level=Qgis.Warning, duration=5)
             else:
                 # wszytsko zgeokodowano
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
                                                     "Zgeokodowano wszystkie %i adresów" % (
-                                                        iloscZgeokodowanych), level=Qgis.Success)
+                                                        iloscZgeokodowanych), level=Qgis.Success, duration=5)
 
     def saveErrors(self, listaWierszy):
         with open(self.outputPlik, 'w') as plik:
@@ -429,9 +429,12 @@ class GeokodowanieAdresow:
         if not self.pattern:
             self.pattern = re.compile("|".join(rep.keys()))
         text = self.pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
+        if "„" in text or "”" in text:
+            text = text.replace("„", '"').replace("”", '"')
         return text
 
     def led_symbol_changed(self):
+
         self.delimeter = self.dlg.led_symbol.text().strip()
         if self.delimeter == '':
             self.delimeter = ','
