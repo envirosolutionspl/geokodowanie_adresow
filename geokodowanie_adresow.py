@@ -26,7 +26,6 @@ from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QToolBar, QProgressDialog
 from qgis.core import *
 from PyQt5.QtWidgets import QFileDialog
-from . import geokoder
 from . import encoding
 import re
 
@@ -35,6 +34,7 @@ from .resources import *
 # Import the code for the dialog
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 import os.path
+from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
 plugin_version = '1.1.6'
@@ -77,6 +77,7 @@ class GeokodowanieAdresow:
 
         # Declare instance attributes
         self.actions = []
+        self.geokodowanie = Geokodowanie(self.iface)
         self.menu = self.tr(u'&EnviroSolutions')
 
         # toolbar
@@ -370,11 +371,11 @@ class GeokodowanieAdresow:
                     kod = wartosci[idKod - 1]
 
                 print("geocoding: ", miejscowosc, ulica, numer, kod)
-                wkt = geokoder.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod=kod)
+                wkt = self.geokodowanie.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod=kod, kodowanie=self.dlg.cbxEncoding.currentText())
                 if wkt is None and kod.strip() != '':
                     # spróbuj jeszcze raz bez kodu pocztowego
                     print("geocoding without zip: ", miejscowosc, ulica, numer, kod)
-                    wkt = geokoder.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod='')
+                    wkt = self.geokodowanie.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod='')
                 if wkt is None:
                     # dodaj do pliku z błędami
                     bledne.append(self.delimeter.join(wartosci) + "\n")
