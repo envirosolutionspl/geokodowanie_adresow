@@ -362,13 +362,13 @@ class GeokodowanieAdresow:
                 miejscowosc, ulica, numer, kod = "", "", "", ""
 
                 if idMiejscowosc:
-                    miejscowosc = wartosci[idMiejscowosc - 1]
+                    miejscowosc = (wartosci[idMiejscowosc - 1])
                 if idUlica:
                     ulica = self.dealWithAbbreviations(wartosci[idUlica - 1])
                 if idNumer:
-                    numer = wartosci[idNumer - 1].upper()
+                    numer = self.korektaFormatu(wartosci[idNumer - 1].upper())
                 if idKod:
-                    kod = wartosci[idKod - 1]
+                    kod = self.korektaFormatu(wartosci[idKod - 1])
 
                 # print("geocoding: ", miejscowosc, ulica, numer, kod)
                 wkt = self.geokodowanie.geocode(miasto=miejscowosc, ulica=ulica, numer=numer, kod=kod)
@@ -422,6 +422,11 @@ class GeokodowanieAdresow:
     def saveErrors(self, listaWierszy):
         with open(self.outputPlik, 'w') as plik:
             plik.writelines(listaWierszy)
+
+    def korektaFormatu(self, numer):
+        if '"' in numer:
+            numer = numer.replace('"', '')
+        return numer
 
     def dealWithAbbreviations(self, text):
         rep = {"al.": "aleje", "Al.": "Aleje", "Pl.": "Plac", "pl.": "plac"}
