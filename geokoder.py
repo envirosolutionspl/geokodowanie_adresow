@@ -1,59 +1,125 @@
 import urllib.request
 import urllib.parse
 import json
+import re
+import logging
 
 from qgis.core import (
     Qgis,
-    QgsProject)
+    QgsProject,
+    QgsGeometry,
+    QgsFeature,
+    QgsTask,
+    QgsMessageLog
+    )
 from qgis.gui import QgsMessageBar
+from qgis.PyQt.QtCore import QObject, pyqtSignal
 
-class Geokodowanie:
-    def __init__(self, iface):
+class Geokodowanie(QgsTask):
+    finishedProcessing = pyqtSignal(list, list)
+    def __init__(self, rekordy, miejscowosci, ulicy, numery, delimeter, warstwa, iface):
+        
+        super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
+        self.rekordy = rekordy
+        self.miejscowosci = miejscowosci
+        self.ulicy = ulicy
+        self.numery = numery
+        self.delimeter = delimeter
+        self.wartswa = warstwa
+        self.features = []
+        self.bledne = []
+        self.iface.messageBar().pushMessage(
+            "Info: ", 
+            "Zaczął się procej geokodowania.", 
+            level=Qgis.Info,
+            duration=5
+        )
 
-    def geocode(self, miasto, ulica, numer, kod):
+    def run(self):
+        total = len(self.rekordy)
+        for i, rekord in enumerate(self.rekordy):
+          
+            wartosci = rekord.strip().split(self.delimeter)
+            wkt = self.geocode(self.miejscowosci[i], self.ulicy[i], self.numery[i])
+            
+            if wkt:
+                geom = QgsGeometry().fromWkt(wkt)
+                feat = QgsFeature()
+                feat.setGeometry(geom)
+                feat.setAttributes(wartosci)
+                self.features.append(feat)
+            else:
+                self.bledne.append(self.delimeter.join(wartosci) + "\n")
+
+            self.setProgress(self.progress() + 100 / total)
+        if self.isCanceled():
+            return False
+        self.finishedProcessing.emit(self.features, self.bledne)
+        return True
+
+
+    def geocode(self, miasto, ulica, numer):
         service = "http://services.gugik.gov.pl/uug/?"
-        if ulica.strip() == '' or ulica.strip() == miasto.strip():
-            params = {"request": "GetAddress", "address": "%s %s %s" % (kod, miasto, numer)}
-        else:
-            params = {"request":"GetAddress", "address":"%s %s, %s %s" % (kod, miasto, ulica, numer)}
-        paramsUrl = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-        request = urllib.request.Request(service + paramsUrl)
-        # print(service + paramsUrl)
+        params = {
+            "request": "GetAddress", 
+            "address": f"{miasto}, {ulica} {numer}" 
+            if ulica and ulica.strip() != miasto.strip() 
+            else f"{miasto} {numer}"}
+        params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
+        request_url = service + params_url
+        # print(request_url)
+
         try:
-            response = urllib.request.urlopen(request).read()
-        except Exception:
-            self.iface.messageBar().pushMessage(
-                "Błąd", 
-                "Serwer nie zwraca odpowiedzi. Proszę sprawdzić połączenie internetowe", 
-                level= Qgis.Critical, 
-                duration= 5
-            )
-            return "blad"
+            response = urllib.request.urlopen(request_url).read()
+        except urllib.error.URLError as e:
+            logging.error(f"Connection failed: {e.reason}")
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {e}")
+        response_json = {}        
+        try:
+            response_json = json.loads(response.decode('utf-8'))
+        except json.JSONDecodeError:
+            logging.error("Decoding JSON has failed")
+
+        if "results" not in response_json or not response_json["results"]:
+            logging.warning("No results found.")
+            return
         else:
-            js = response.decode("utf-8")#pobrany, zdekodowany plik json z odpowiedzia z serwera
-            if not "Blad" in js and not "zapytania" in js:
-                w = json.loads(js)
-                try:
-                    results = w['results']
-                    if not results: #jeżeli jest pusta lista z wynikami
-                        return None
-                    else: #zwróć pierwszy wynik
-                        geomWkt = w['results']["1"]['geometry_wkt'] #weź pierwszy wynik z odpowiedzi serwera
-                        return geomWkt
-                except KeyError:
-                    # print(w)
-                    return (str(w),0)
+            return response_json["results"]["1"]["geometry_wkt"]
+            
 
+    # def wynikiGeokodowania(self, features, bledne):
+    #     self.warstwa.dataProvider().addFeatures(features)
+    #     self.warstwa.updateExtents()
+    #     QgsProject.instance().addMapLayer(self.warstwa)
 
-    # if __name__ == '__main__':
-    #     g = geocode(miasto='Słupno', ulica='Lipowa', numer='4', kod='09-472')
-    #     print(g)
-    #     g = geocode(miasto='Słupno', ulica='Lipowa', numer='4', kod='05-250')
-    #     print(g)
-    #     g = geocode(miasto='Słupno', ulica='Lipowa', numer='4', kod='')
-    #     print(g)
-    #     g = geocode(miasto='Opole', ulica='Opolska', numer='34', kod='45-960')
-    #     print(g)
-    #     g = geocode(miasto='Opole', ulica='Edmunda Osmańczyka', numer='20', kod='45-027')
-    #     print(g)
+    #     iloscZgeokodowanych = len(features)
+
+    #     # zapisanie blednych adresow do pliku
+    #     if bledne:  # jezeli cokolwiek zapisalo sie do listy bledne
+    #         iloscBledow = len(bledne)
+
+    #         bledne.insert(0, self.naglowek)
+    #         self.saveErrors(bledne)
+
+    #         self.iface.messageBar().pushMessage("Wynik geokodowania:",
+    #                                             "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
+    #                                                 iloscZgeokodowanych, iloscBledow + iloscZgeokodowanych,
+    #                                                 self.outputPlik), level=Qgis.Warning, duration=5)
+    #     else:
+    #         # wszytsko zgeokodowano
+    #         self.iface.messageBar().pushMessage("Wynik geokodowania:",
+    #                                             "Zgeokodowano wszystkie %i adresów" % (
+    #                                                 iloscZgeokodowanych), level=Qgis.Success, duration=5)
+
+    def finished(self, result):
+        print("koniec?")
+        if result:
+            QgsMessageLog.logMessage('sukces')
+            self.iface.messageBar().pushMessage("Sukces", "Udało się! Dane BDOT10k zostały pobrane.",
+                                                level=Qgis.Success, duration=5)
+        else:
+            self.iface.messageBar().pushMessage("Błąd",
+                                                "Geokodowanie  nie powiodło się.", level=Qgis.Warning, duration=5)
+            self.finishedProcessing.emit(self.features, self.bledne)
