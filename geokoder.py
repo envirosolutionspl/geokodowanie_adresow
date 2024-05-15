@@ -50,11 +50,12 @@ class Geokodowanie(QgsTask):
                 feat.setAttributes(wartosci)
                 self.features.append(feat)
             else:
-                self.bledne.append(self.delimeter.join(wartosci) + "\n")
+                self.bledne.append(self.miejscowosci[i] + self.delimeter + self.ulicy[i] + self.delimeter + self.numery[i] +"\n")
 
             self.setProgress(self.progress() + 100 / total)
-        if self.isCanceled():
-            return False
+            if self.isCanceled():
+                return False
+        
         self.finishedProcessing.emit(self.features, self.bledne)
         return True
 
@@ -65,10 +66,10 @@ class Geokodowanie(QgsTask):
             "request": "GetAddress", 
             "address": f"{miasto}, {ulica} {numer}" 
             if ulica and ulica.strip() != miasto.strip() 
-            else f"{miasto} {numer}"}
+            else f"{miasto} {numer}"
+        }
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = service + params_url
-        # print(request_url)
 
         try:
             response = urllib.request.urlopen(request_url).read()
@@ -89,30 +90,6 @@ class Geokodowanie(QgsTask):
             return response_json["results"]["1"]["geometry_wkt"]
             
 
-    # def wynikiGeokodowania(self, features, bledne):
-    #     self.warstwa.dataProvider().addFeatures(features)
-    #     self.warstwa.updateExtents()
-    #     QgsProject.instance().addMapLayer(self.warstwa)
-
-    #     iloscZgeokodowanych = len(features)
-
-    #     # zapisanie blednych adresow do pliku
-    #     if bledne:  # jezeli cokolwiek zapisalo sie do listy bledne
-    #         iloscBledow = len(bledne)
-
-    #         bledne.insert(0, self.naglowek)
-    #         self.saveErrors(bledne)
-
-    #         self.iface.messageBar().pushMessage("Wynik geokodowania:",
-    #                                             "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
-    #                                                 iloscZgeokodowanych, iloscBledow + iloscZgeokodowanych,
-    #                                                 self.outputPlik), level=Qgis.Warning, duration=5)
-    #     else:
-    #         # wszytsko zgeokodowano
-    #         self.iface.messageBar().pushMessage("Wynik geokodowania:",
-    #                                             "Zgeokodowano wszystkie %i adresów" % (
-    #                                                 iloscZgeokodowanych), level=Qgis.Success, duration=5)
-
     def finished(self, result):
         print("koniec?")
         if result:
@@ -123,3 +100,7 @@ class Geokodowanie(QgsTask):
             self.iface.messageBar().pushMessage("Błąd",
                                                 "Geokodowanie  nie powiodło się.", level=Qgis.Warning, duration=5)
             self.finishedProcessing.emit(self.features, self.bledne)
+
+    def cancel(self):
+        self.finishedProcessing.emit(self.features, self.bledne)
+        super().cancel()

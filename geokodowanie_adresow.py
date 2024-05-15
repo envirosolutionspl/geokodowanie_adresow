@@ -339,18 +339,18 @@ class GeokodowanieAdresow:
             naglowki = [x.strip() for x in naglowki]
 
             if self.dlg.cbxFirstRow.isChecked():
-                rekordy = zawartosc[1:]
+                self.rekordy = zawartosc[1:]
                 self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=True)
             else:
-                rekordy = zawartosc[:]
-                rekordy[0] = rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
+                self.rekordy = zawartosc[:]
+                self.rekordy[0] = self.rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
                 self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
 
             # sprawdzenie czy plik CSV jest poprawny
-            if not self.csvCheck(rekordy, idMiejscowosc, idUlica, idNumer):
+            if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer):
                 return False
             
-            for rekord in rekordy:
+            for rekord in self.rekordy:
                 try:
                     wartosci = rekord.strip().split(self.delimeter)
                     miejscowosci.append(wartosci[idMiejscowosc - 1] if idMiejscowosc else "")
@@ -361,7 +361,7 @@ class GeokodowanieAdresow:
                     continue
 
             task = Geokodowanie(
-                rekordy = rekordy, 
+                rekordy = self.rekordy, 
                 miejscowosci = miejscowosci, 
                 ulicy = ulicy, 
                 numery = numery, 
@@ -399,20 +399,29 @@ class GeokodowanieAdresow:
             self.warstwa.dataProvider().addFeatures(features)
             self.warstwa.updateExtents()
             QgsProject.instance().addMapLayer(self.warstwa)
-            iloscZgeokodowanych = len(features)
+            iloscZgeokodowanych = len(self.rekordy)
                 
             # zapisanie blednych adresow do pliku
             if bledne:  # jezeli cokolwiek zapisalo sie do listy bledne
                 iloscBledow = len(bledne)
-                bledne.insert(0, "naglowek")
+                bledne.insert(0, self.naglowek)
                 self.saveErrors(bledne)
 
-                self.iface.messageBar().pushMessage("Wynik geokodowania:",
-                                                    "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
-                                                        iloscZgeokodowanych, iloscBledow + iloscZgeokodowanych,
-                                                        self.outputPlik), level=Qgis.Warning)
+                self.iface.messageBar().pushMessage(
+                    "Wynik geokodowania:",
+                    "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
+                        iloscZgeokodowanych,
+                        iloscBledow + iloscZgeokodowanych,
+                        self.outputPlik
+                        ), 
+                    level=Qgis.Warning,
+                    duration = 5
+                )
             else:
                 # wszytsko zgeokodowano
-                self.iface.messageBar().pushMessage("Wynik geokodowania:",
-                                                    "Zgeokodowano wszystkie %i adresów" % (
-                                                        iloscZgeokodowanych), level=Qgis.Success)
+                self.iface.messageBar().pushMessage(
+                    "Wynik geokodowania:",
+                    "Zgeokodowano wszystkie %i adresów" % (iloscZgeokodowanych),
+                    level=Qgis.Success
+                    duration = 5
+                )
