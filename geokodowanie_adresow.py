@@ -58,7 +58,6 @@ class GeokodowanieAdresow:
             self.feed = QgisFeed()
             self.feed.initFeed()
 
-        self.pattern = None
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
@@ -324,53 +323,61 @@ class GeokodowanieAdresow:
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
         idNumer = self.dlg.cbxNumer.currentIndex()
-        miejscowosci = []
-        ulicy = []
-        numery = []
-
-        with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
-            try:
-                zawartosc = plik.readlines()  # całość jako lista tekstowych linijek
-            except UnicodeDecodeError:
-                return False
-
-            naglowek = zawartosc[0]
-            naglowki = naglowek.split(self.delimeter)  # lista wartosci w ramach naglowka
-            naglowki = [x.strip() for x in naglowki]
-
-            if self.dlg.cbxFirstRow.isChecked():
-                self.rekordy = zawartosc[1:]
-                self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=True)
-            else:
-                self.rekordy = zawartosc[:]
-                self.rekordy[0] = self.rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
-                self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
-
-            # sprawdzenie czy plik CSV jest poprawny
-            if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer):
-                return False
-            
-            for rekord in self.rekordy:
-                try:
-                    wartosci = rekord.strip().split(self.delimeter)
-                    miejscowosci.append(wartosci[idMiejscowosc - 1] if idMiejscowosc else "")
-                    ulicy.append(self.dealWithAbbreviations(wartosci[idUlica - 1]) if idUlica else "")
-                    numery.append(self.korektaFormatu(wartosci[idNumer - 1].upper()) if idNumer else "")
-                except Exception as e:
-                    self.iface.messageBar().pushMessage("Błąd przetwarzania rekordu", str(e), level=Qgis.Critical, duration=3)
-                    continue
-
-            task = Geokodowanie(
-                rekordy = self.rekordy, 
-                miejscowosci = miejscowosci, 
-                ulicy = ulicy, 
-                numery = numery, 
-                delimeter = self.delimeter, 
-                warstwa = self.warstwa, 
-                iface = self.iface,
+        if not idMiejscowosc and not idUlica and not idNumer:
+            self.iface.messageBar().pushMessage(
+                "Informacja: ", 
+                "Nie wybrano żadnych atrybutów", 
+                Qgis.Info, 
+                duration =5
             )
-            QgsApplication.taskManager().addTask(task)
-        task.finishedProcessing.connect(self.slot_function)
+        else:   
+            miejscowosci = []
+            ulicy = []
+            numery = []
+
+            with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+                try:
+                    zawartosc = plik.readlines()  # całość jako lista tekstowych linijek
+                except UnicodeDecodeError:
+                    return False
+
+                self.naglowek = zawartosc[0]
+                naglowki = self.naglowek.split(self.delimeter)  # lista wartosci w ramach naglowka
+                naglowki = [x.strip() for x in naglowki]
+
+                if self.dlg.cbxFirstRow.isChecked():
+                    self.rekordy = zawartosc[1:]
+                    self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=True)
+                else:
+                    self.rekordy = zawartosc[:]
+                    self.rekordy[0] = self.rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
+                    self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
+
+                # sprawdzenie czy plik CSV jest poprawny
+                if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer):
+                    return False
+                
+                for rekord in self.rekordy:
+                    try:
+                        wartosci = rekord.strip().split(self.delimeter)
+                        miejscowosci.append(wartosci[idMiejscowosc - 1] if idMiejscowosc else "")
+                        ulicy.append(self.dealWithAbbreviations(wartosci[idUlica - 1]) if idUlica else "")
+                        numery.append(self.korektaFormatu(wartosci[idNumer - 1].upper()) if idNumer else "")
+                    except Exception as e:
+                        self.iface.messageBar().pushMessage("Błąd przetwarzania rekordu", str(e), level=Qgis.Critical, duration=3)
+                        continue
+
+                task = Geokodowanie(
+                    rekordy = self.rekordy, 
+                    miejscowosci = miejscowosci, 
+                    ulicy = ulicy, 
+                    numery = numery, 
+                    delimeter = self.delimeter, 
+                    warstwa = self.warstwa, 
+                    iface = self.iface,
+                )
+                QgsApplication.taskManager().addTask(task)
+            task.finishedProcessing.connect(self.slot_function)
 
     def korektaFormatu(self, numer):
         if '"' in numer:
@@ -396,10 +403,11 @@ class GeokodowanieAdresow:
             plik.writelines(listaWierszy)
 
     def slot_function(self, features, bledne):
+            self.dlg.btnGeokoduj.setEnabled(True)
             self.warstwa.dataProvider().addFeatures(features)
             self.warstwa.updateExtents()
             QgsProject.instance().addMapLayer(self.warstwa)
-            iloscZgeokodowanych = len(self.rekordy)
+            iloscZgeokodowanych = len(features)
                 
             # zapisanie blednych adresow do pliku
             if bledne:  # jezeli cokolwiek zapisalo sie do listy bledne
@@ -411,7 +419,7 @@ class GeokodowanieAdresow:
                     "Wynik geokodowania:",
                     "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
                         iloscZgeokodowanych,
-                        iloscBledow + iloscZgeokodowanych,
+                        len(self.rekordy),
                         self.outputPlik
                         ), 
                     level=Qgis.Warning,

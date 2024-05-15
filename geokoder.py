@@ -3,7 +3,7 @@ import urllib.parse
 import json
 import re
 import logging
-
+from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from qgis.core import (
     Qgis,
     QgsProject,
@@ -18,7 +18,7 @@ from qgis.PyQt.QtCore import QObject, pyqtSignal
 class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list)
     def __init__(self, rekordy, miejscowosci, ulicy, numery, delimeter, warstwa, iface):
-        
+        self.dlg = GeokodowanieAdresowDialog()
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
         self.rekordy = rekordy
@@ -37,6 +37,7 @@ class Geokodowanie(QgsTask):
         )
 
     def run(self):
+        self.dlg.btnGeokoduj.setEnabled(False)
         total = len(self.rekordy)
         for i, rekord in enumerate(self.rekordy):
           
