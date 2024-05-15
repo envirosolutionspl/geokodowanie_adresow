@@ -154,9 +154,6 @@
     <item>
      <widget class="QComboBox" name="cbxNumer"/>
     </item>
-    <item>
-     <widget class="QComboBox" name="cbxKod"/>
-    </item>
    </layout>
   </widget>
   <widget class="QWidget" name="layoutWidget">
@@ -187,13 +184,6 @@
      <widget class="QLabel" name="label_5">
       <property name="text">
        <string>Numer Porządkowy</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLabel" name="label_6">
-      <property name="text">
-       <string>Kod Pocztowy</string>
       </property>
      </widget>
     </item>
@@ -237,11 +227,23 @@
   <widget class="QLabel" name="img_main">
    <property name="geometry">
     <rect>
-     <x>400</x>
+     <x>380</x>
      <y>150</y>
-     <width>121</width>
-     <height>111</height>
+     <width>120</width>
+     <height>120</height>
     </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>120</width>
+     <height>120</height>
+    </size>
    </property>
    <property name="text">
     <string/>

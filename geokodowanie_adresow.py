@@ -422,6 +422,6 @@ class GeokodowanieAdresow:
                 self.iface.messageBar().pushMessage(
                     "Wynik geokodowania:",
                     "Zgeokodowano wszystkie %i adresów" % (iloscZgeokodowanych),
-                    level=Qgis.Success
+                    level=Qgis.Success,
                     duration = 5
                 )
