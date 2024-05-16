@@ -40,29 +40,34 @@ class Geokodowanie(QgsTask):
     def run(self):
         self.dlg.btnGeokoduj.setEnabled(False)
         total = len(self.rekordy)
+        unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
+        
         for i, rekord in enumerate(self.rekordy):
             self.kilka = []
             wartosci = rekord.strip().split(self.delimeter)
             wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), self.kody[i].strip())
-            print(wkt)
             if not wkt:
-                wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(),"")
-            if isinstance(wkt, list):
-                print(wkt)
+                wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), "")
+           
+            if isinstance(wkt, list):  # Obsługa listy punktów
                 for point in wkt:
-                    geom = QgsGeometry().fromWkt(point)
+                    if point not in unique_geometries:
+                        geom = QgsGeometry().fromWkt(point)
+                        feat = QgsFeature()
+                        feat.setGeometry(geom)
+                        feat.setAttributes(wartosci)
+                        self.features.append(feat)
+                        unique_geometries.add(point)
+            elif "POINT" in wkt or "MULTILINESTRING" in wkt:  # Obsługa pojedynczych geometrii
+                if wkt not in unique_geometries:
+                    geom = QgsGeometry().fromWkt(wkt)
                     feat = QgsFeature()
                     feat.setGeometry(geom)
                     feat.setAttributes(wartosci)
                     self.features.append(feat)
-            elif "POINT" in wkt:
-                geom = QgsGeometry().fromWkt(wkt)
-                feat = QgsFeature()
-                feat.setGeometry(geom)
-                feat.setAttributes(wartosci)
-                self.features.append(feat)
+                    unique_geometries.add(wkt)
             else:
-                self.bledne.append(self.miejscowosci[i] + self.delimeter + self.ulicy[i] + self.delimeter + self.numery[i] +self.delimeter+self.kody[i]+"\n")
+                self.bledne.append(self.miejscowosci[i] + self.delimeter + self.ulicy[i] + self.delimeter + self.numery[i] + self.delimeter + self.kody[i] + "\n")
 
             self.setProgress(self.progress() + 100 / total)
             if self.isCanceled():
@@ -70,6 +75,7 @@ class Geokodowanie(QgsTask):
         
         self.finishedProcessing.emit(self.features, self.bledne)
         return True
+
 
 
     def geocode(self, miasto, ulica, numer, kod):
