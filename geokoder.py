@@ -17,7 +17,7 @@ from qgis.PyQt.QtCore import QObject, pyqtSignal
 
 class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list)
-    def __init__(self, rekordy, miejscowosci, ulicy, numery, delimeter, warstwa, iface):
+    def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, warstwa, iface):
         self.dlg = GeokodowanieAdresowDialog()
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
@@ -25,6 +25,7 @@ class Geokodowanie(QgsTask):
         self.miejscowosci = miejscowosci
         self.ulicy = ulicy
         self.numery = numery
+        self.kody = kody
         self.delimeter = delimeter
         self.wartswa = warstwa
         self.features = []
@@ -42,8 +43,9 @@ class Geokodowanie(QgsTask):
         for i, rekord in enumerate(self.rekordy):
           
             wartosci = rekord.strip().split(self.delimeter)
-            wkt = self.geocode(self.miejscowosci[i], self.ulicy[i], self.numery[i])
-            
+            wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), self.kody[i].strip())
+            if not wkt:
+                wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(),"")
             if wkt:
                 geom = QgsGeometry().fromWkt(wkt)
                 feat = QgsFeature()
@@ -51,7 +53,7 @@ class Geokodowanie(QgsTask):
                 feat.setAttributes(wartosci)
                 self.features.append(feat)
             else:
-                self.bledne.append(self.miejscowosci[i] + self.delimeter + self.ulicy[i] + self.delimeter + self.numery[i] +"\n")
+                self.bledne.append(self.miejscowosci[i] + self.delimeter + self.ulicy[i] + self.delimeter + self.numery[i] +self.delimeter+self.kody[i]+"\n")
 
             self.setProgress(self.progress() + 100 / total)
             if self.isCanceled():
@@ -61,17 +63,17 @@ class Geokodowanie(QgsTask):
         return True
 
 
-    def geocode(self, miasto, ulica, numer):
+    def geocode(self, miasto, ulica, numer, kod):
         service = "http://services.gugik.gov.pl/uug/?"
         params = {
             "request": "GetAddress", 
-            "address": f"{miasto}, {ulica} {numer}" 
-            if ulica and ulica.strip() != miasto.strip() 
-            else f"{miasto} {numer}"
+            "address": f"{kod} {miasto}, {ulica} {numer}" 
+            if ulica and ulica.strip() != miasto.strip()
+            else f"{kod}{miasto} {numer}"
         }
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = service + params_url
-
+        print(request_url)
         try:
             response = urllib.request.urlopen(request_url).read()
         except urllib.error.URLError as e:
