@@ -41,12 +41,21 @@ class Geokodowanie(QgsTask):
         self.dlg.btnGeokoduj.setEnabled(False)
         total = len(self.rekordy)
         for i, rekord in enumerate(self.rekordy):
-          
+            self.kilka = []
             wartosci = rekord.strip().split(self.delimeter)
             wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), self.kody[i].strip())
+            print(wkt)
             if not wkt:
                 wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(),"")
-            if wkt:
+            if isinstance(wkt, list):
+                print(wkt)
+                for point in wkt:
+                    geom = QgsGeometry().fromWkt(point)
+                    feat = QgsFeature()
+                    feat.setGeometry(geom)
+                    feat.setAttributes(wartosci)
+                    self.features.append(feat)
+            elif "POINT" in wkt:
                 geom = QgsGeometry().fromWkt(wkt)
                 feat = QgsFeature()
                 feat.setGeometry(geom)
@@ -65,12 +74,23 @@ class Geokodowanie(QgsTask):
 
     def geocode(self, miasto, ulica, numer, kod):
         service = "http://services.gugik.gov.pl/uug/?"
-        params = {
+        if not ulica or ulica =="":
+            params = {
             "request": "GetAddress", 
-            "address": f"{kod} {miasto}, {ulica} {numer}" 
-            if ulica and ulica.strip() != miasto.strip()
-            else f"{kod}{miasto} {numer}"
-        }
+            "address": f"{miasto}"
+            }
+        elif not numer or numer =="":
+            params = {
+            "request": "GetAddress", 
+            "address": f"{miasto},{ulica}"
+            }
+        else:
+            params = {
+                "request": "GetAddress", 
+                "address": f"{kod} {miasto}, {ulica} {numer}" 
+                if ulica and ulica.strip() != miasto.strip()
+                else f"{kod}{miasto} {numer}"
+            }
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = service + params_url
         print(request_url)
@@ -89,6 +109,10 @@ class Geokodowanie(QgsTask):
         if "results" not in response_json or not response_json["results"]:
             logging.warning("No results found.")
             return
+        elif len(response_json["results"]) > 1:
+            for result in response_json["results"]:
+                self.kilka.append(response_json["results"][f"{result}"]["geometry_wkt"])
+            return self.kilka
         else:
             return response_json["results"]["1"]["geometry_wkt"]
             
@@ -98,10 +122,10 @@ class Geokodowanie(QgsTask):
         if result:
             QgsMessageLog.logMessage('sukces')
             self.iface.messageBar().pushMessage("Sukces", "Udało się! Dane BDOT10k zostały pobrane.",
-                                                level=Qgis.Success, duration=5)
+                                                level=Qgis.Success, duration=10)
         else:
             self.iface.messageBar().pushMessage("Błąd",
-                                                "Geokodowanie  nie powiodło się.", level=Qgis.Warning, duration=5)
+                                                "Geokodowanie  nie powiodło się.", level=Qgis.Warning, duration=10)
             self.finishedProcessing.emit(self.features, self.bledne)
 
     def cancel(self):

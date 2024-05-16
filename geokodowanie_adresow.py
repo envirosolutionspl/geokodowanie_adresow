@@ -440,7 +440,10 @@ class GeokodowanieAdresow:
                 # wszytsko zgeokodowano
                 self.iface.messageBar().pushMessage(
                     "Wynik geokodowania:",
-                    "Zgeokodowano wszystkie %i adresów" % (iloscZgeokodowanych),
+                    "Zgeokodowano wszystkie %i/%i adresów" % (
+                        iloscZgeokodowanych,
+                        len(self.rekordy),
+                    ),
                     level=Qgis.Success,
                     duration = 5
                 )
