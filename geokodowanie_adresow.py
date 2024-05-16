@@ -419,9 +419,10 @@ class GeokodowanieAdresow:
             self.warstwa.updateExtents()
             QgsProject.instance().addMapLayer(self.warstwa)
             iloscZgeokodowanych = len(features)
+            iloscRekordow = len(self.rekordy)
                 
             # zapisanie blednych adresow do pliku
-            if bledne:  # jezeli cokolwiek zapisalo sie do listy bledne
+            if bledne or iloscZgeokodowanych == 0:  # jezeli cokolwiek zapisalo sie do listy bledne
                 iloscBledow = len(bledne)
                 bledne.insert(0, self.naglowek)
                 self.saveErrors(bledne)
@@ -430,19 +431,29 @@ class GeokodowanieAdresow:
                     "Wynik geokodowania:",
                     "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
                         iloscZgeokodowanych,
-                        len(self.rekordy),
+                        iloscRekordow,
                         self.outputPlik
                         ), 
                     level=Qgis.Warning,
+                    duration = 5
+                )
+
+            elif iloscZgeokodowanych > iloscRekordow:
+                self.iface.messageBar().pushMessage(
+                    "Wynik geokodowania:",
+                    "Zgeokodowano %i/%i adresów. Niektóre adresy są zdublowane." % (
+                        iloscZgeokodowanych,
+                        iloscRekordow
+                    ),
+                    level=Qgis.Success,
                     duration = 5
                 )
             else:
                 # wszytsko zgeokodowano
                 self.iface.messageBar().pushMessage(
                     "Wynik geokodowania:",
-                    "Zgeokodowano wszystkie %i/%i adresów" % (
-                        iloscZgeokodowanych,
-                        len(self.rekordy),
+                    "Zgeokodowano wszystkie %i adresów" % (
+                        iloscZgeokodowanych
                     ),
                     level=Qgis.Success,
                     duration = 5
