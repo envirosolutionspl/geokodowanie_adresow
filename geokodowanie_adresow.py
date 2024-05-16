@@ -28,12 +28,12 @@ from qgis.core import *
 from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 import re
+import os.path
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
-import os.path
 from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
@@ -276,7 +276,7 @@ class GeokodowanieAdresow:
                 except UnicodeDecodeError:
                     self.iface.messageBar().pushMessage("Błąd kodowania:",
                                                         "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie",
-                                                        level=Qgis.Warning, duration=5)
+                                                        level=Qgis.Warning, duration=10)
                     return False
                 elementyNaglowkow = naglowki.split(self.delimeter)
                 elementyNaglowkow = [x.strip() for x in
@@ -305,7 +305,7 @@ class GeokodowanieAdresow:
             except IndexError:
                 self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
                                                     "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
-                                                    level=Qgis.Critical, duration=5)
+                                                    level=Qgis.Critical, duration=10)
                 return False  # wystąpiły błędy
         return True  # poprawnie wczytano wszystkie wiersze
 
@@ -384,7 +384,7 @@ class GeokodowanieAdresow:
                     response = wkt[0]
                     self.iface.messageBar().pushMessage("Błąd. Odpowiedź serwera GUGiK:",
                                                         response,
-                                                        level=Qgis.Critical, duration=5)
+                                                        level=Qgis.Critical, duration=10)
                     break
 
                 else:
@@ -412,12 +412,12 @@ class GeokodowanieAdresow:
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
                                                     "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
                                                         iloscZgeokodowanych, iloscBledow + iloscZgeokodowanych,
-                                                        self.outputPlik), level=Qgis.Warning, duration=5)
+                                                        self.outputPlik), level=Qgis.Warning, duration=10)
             else:
                 # wszytsko zgeokodowano
                 self.iface.messageBar().pushMessage("Wynik geokodowania:",
                                                     "Zgeokodowano wszystkie %i adresów" % (
-                                                        iloscZgeokodowanych), level=Qgis.Success, duration=5)
+                                                        iloscZgeokodowanych), level=Qgis.Success, duration=10)
 
     def saveErrors(self, listaWierszy):
         with open(self.outputPlik, 'w') as plik:
