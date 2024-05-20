@@ -284,7 +284,7 @@ class GeokodowanieAdresow:
                 except UnicodeDecodeError:
                     self.iface.messageBar().pushMessage(
                         "Błąd kodowania:",
-                        "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie",
+                        "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj innego kodowania.",
                         level=Qgis.Warning, 
                         duration=5
                     )
@@ -350,7 +350,7 @@ class GeokodowanieAdresow:
         if not idMiejscowosc and not idUlica and not idNumer:
             self.iface.messageBar().pushMessage(
                 "Informacja: ", 
-                "Nie wybrano żadnych atrybutów", 
+                "Nie wybrano żadnych atrybutów.", 
                 Qgis.Info, 
                 duration =5
             )
