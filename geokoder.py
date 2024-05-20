@@ -110,7 +110,7 @@ class Geokodowanie(QgsTask):
             QgsMessageLog.logMessage('sukces')
             self.iface.messageBar().pushMessage(
                 "Sukces", 
-                "Udało się! Dane BDOT10k zostały pobrane.",
+                "Udało się! Dane zostały pobrane.",
                 level=Qgis.Success, 
                 duration=5
             )
@@ -126,4 +126,3 @@ class Geokodowanie(QgsTask):
     def cancel(self):
         self.finishedProcessing.emit(self.features, self.bledne)
         super().cancel()
-        
