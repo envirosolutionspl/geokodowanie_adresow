@@ -24,8 +24,8 @@
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QToolBar, QProgressDialog
-from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsTask, QgsTaskManager, QgsProject
+from qgis.PyQt.QtWidgets import QAction, QToolBar
+from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject
 from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 import re
@@ -89,6 +89,8 @@ class GeokodowanieAdresow:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+        self.taskManager = QgsApplication.taskManager()
+        self.project = QgsProject.instance()
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -116,6 +118,7 @@ class GeokodowanieAdresow:
             status_tip=None,
             whats_this=None,
             parent=None):
+        
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -236,7 +239,7 @@ class GeokodowanieAdresow:
             self.dlg.lbl_pluginVersion.setText('%s %s' % (plugin_name, plugin_version))
 
         # show the dialog
-        QgsApplication.taskManager().cancelAll()
+        self.taskManager.cancelAll()
         self.dlg.show()
         # Run the dialog event loop
         result = self.dlg.exec_()
@@ -246,6 +249,7 @@ class GeokodowanieAdresow:
 
     def openInputFile(self):
         self.plik = QFileDialog.getOpenFileName()[0]
+        
         if self.plik != '':
             # print(self.plik, type(self.plik))
             self.dlg.lblInputFile.setText(self.plik)
@@ -258,6 +262,7 @@ class GeokodowanieAdresow:
 
     def saveOutputFile(self):
         self.outputPlik = QFileDialog.getSaveFileName(filter="Pliki tekstowe (*.txt)")[0]
+        
         if self.outputPlik != '':
             self.dlg.lblOutputFile.setText(self.outputPlik)
 
@@ -270,19 +275,27 @@ class GeokodowanieAdresow:
         self.dlg.cbxUlica.clear()
         self.dlg.cbxNumer.clear()
         self.dlg.cbxKod.clear()
+
         if self.isInputFile:
             with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+                
                 try:
                     naglowki = plik.readline()
+
                 except UnicodeDecodeError:
-                    self.iface.messageBar().pushMessage("Błąd kodowania:",
-                                                        "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie",
-                                                        level=Qgis.Warning, duration=5)
+                    self.iface.messageBar().pushMessage(
+                        "Błąd kodowania:",
+                        "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj inne kodowanie",
+                        level=Qgis.Warning, 
+                        duration=5
+                    )
                     return False
+                
                 elementyNaglowkow = naglowki.split(self.delimeter)
                 elementyNaglowkow = [x.strip() for x in
                                      elementyNaglowkow]  # usuwa biale znaki dla kazdego elementu listy
                 elementyNaglowkow.insert(0, "")
+
                 # wczytywanie listy nagłówków do ComboBoxów
                 self.dlg.cbxMiejscowosc.addItems(elementyNaglowkow)
                 self.dlg.cbxUlica.addItems(elementyNaglowkow)
@@ -294,6 +307,7 @@ class GeokodowanieAdresow:
         for rekord in rekordy:  # rekord:
             wartosci = rekord.split(self.delimeter)  # lista wartosci w ramach jednego rekordu
             wartosci = [x.strip() for x in wartosci]
+            
             try:
                 if idMiejscowosc:
                     wartosci[idMiejscowosc - 1]
@@ -303,15 +317,20 @@ class GeokodowanieAdresow:
                     wartosci[idNumer - 1]
                 if idKod:
                     wartosci[idKod - 1]
+
             except IndexError:
-                self.iface.messageBar().pushMessage("Błąd wczytywania pliku:",
-                                                    "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
-                                                    level=Qgis.Critical, duration=5)
+                self.iface.messageBar().pushMessage(
+                    "Błąd wczytywania pliku:",
+                    "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
+                    level=Qgis.Critical, 
+                    duration=5
+                )
                 return False  # wystąpiły błędy
         return True  # poprawnie wczytano wszystkie wiersze
 
     def createEmptyLayer(self, headings, hasHeadings=True):
         fields = ''
+
         if hasHeadings:
             for heading in headings:
                 fields += "&field=%s:string(0,-1)" % heading
@@ -343,6 +362,7 @@ class GeokodowanieAdresow:
             kody = []
 
             with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+                
                 try:
                     zawartosc = plik.readlines()  # całość jako lista tekstowych linijek
                 except UnicodeDecodeError:
@@ -365,6 +385,7 @@ class GeokodowanieAdresow:
                     return False
                 
                 for rekord in self.rekordy:
+                    
                     try:
                         wartosci = rekord.strip().split(self.delimeter)
                         miejscowosci.append(wartosci[idMiejscowosc - 1] if idMiejscowosc else "")
@@ -373,7 +394,12 @@ class GeokodowanieAdresow:
                         kody.append(self.korektaFormatu(wartosci[idKod - 1]) if idKod else "")
 
                     except Exception as e:
-                        self.iface.messageBar().pushMessage("Błąd przetwarzania rekordu", str(e), level=Qgis.Critical, duration=3)
+                        self.iface.messageBar().pushMessage(
+                            "Błąd przetwarzania rekordu", 
+                            str(e), 
+                            level=Qgis.Critical, 
+                            duration=3
+                        )
                         continue
 
                 task = Geokodowanie(
@@ -386,7 +412,8 @@ class GeokodowanieAdresow:
                     warstwa = self.warstwa, 
                     iface = self.iface,
                 )
-                QgsApplication.taskManager().addTask(task)
+
+                self.taskManager.addTask(task)
             task.finishedProcessing.connect(self.slot_function)
 
     def korektaFormatu(self, numer):
@@ -399,6 +426,7 @@ class GeokodowanieAdresow:
         rep = dict((re.escape(k), v) for k, v in rep.items())
         self.pattern = re.compile("|".join(rep.keys()))
         text = self.pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
+        
         if "„" in text or "”" in text:
             text = text.replace("„", '"').replace("”", '"')
         return text        
@@ -418,7 +446,7 @@ class GeokodowanieAdresow:
             self.dlg.btnGeokoduj.setEnabled(True)
             self.warstwa.dataProvider().addFeatures(features)
             self.warstwa.updateExtents()
-            QgsProject.instance().addMapLayer(self.warstwa)
+            self.project.addMapLayer(self.warstwa)
             iloscZgeokodowanych = len(features)
                 
             # zapisanie blednych adresow do pliku
