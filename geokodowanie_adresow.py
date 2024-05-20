@@ -8,7 +8,7 @@
                               -------------------
         begin                : 2024-12-13
         git sha              : $Format:%H$
-        copyright            : (C) 2024 by Michał Włoga - EnviroSolutions Sp. z o.o.
+        copyright            : (C) 2024 by EnviroSolutions Sp. z o.o.
         email                : office@envirosolutions.pl
  ***************************************************************************/
 
@@ -21,6 +21,7 @@
  *                                                                         *
  ***************************************************************************/
 """
+
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QToolBar, QProgressDialog

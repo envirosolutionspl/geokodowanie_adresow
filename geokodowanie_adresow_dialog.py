@@ -8,7 +8,7 @@
                              -------------------
         begin                : 2024-12-13
         git sha              : $Format:%H$
-        copyright            : (C) 2024 by Michał Włoga - EnviroSolutions Sp. z o.o.
+        copyright            : (C) 2024 by EnviroSolutions Sp. z o.o.
         email                : office@envirosolutions.pl
  ***************************************************************************/
 
