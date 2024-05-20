@@ -248,7 +248,8 @@ class GeokodowanieAdresow:
             pass
 
     def openInputFile(self):
-        self.plik = QFileDialog.getOpenFileName()[0]
+        self.plik = QFileDialog.getOpenFileName(filter="Pliki CSV (*.csv)")[0]
+        # self.plik = QFileDialog.getOpenFileName()[0]
         
         if self.plik != '':
             # print(self.plik, type(self.plik))
