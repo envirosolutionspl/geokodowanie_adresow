@@ -30,9 +30,11 @@ class Geokodowanie(QgsTask):
         self.wartswa = warstwa
         self.features = []
         self.bledne = []
+
+
         self.iface.messageBar().pushMessage(
             "Info: ", 
-            "Zaczął się procej geokodowania.", 
+            "Zaczął się proces geokodowania.", 
             level=Qgis.Info,
             duration=5
         )
@@ -40,12 +42,14 @@ class Geokodowanie(QgsTask):
     def run(self):
         self.dlg.btnGeokoduj.setEnabled(False)
         total = len(self.rekordy)
+
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
         
         for i, rekord in enumerate(self.rekordy):
             self.kilka = []
             wartosci = rekord.strip().split(self.delimeter)
             wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), self.kody[i].strip())
+            
             if not wkt:
                 wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), "")
            
@@ -58,6 +62,7 @@ class Geokodowanie(QgsTask):
                         feat.setAttributes(wartosci)
                         self.features.append(feat)
                         unique_geometries.add(point)
+                        
             elif "POINT" in wkt or "MULTILINESTRING" in wkt:  # Obsługa pojedynczych geometrii
                 if wkt not in unique_geometries:
                     geom = QgsGeometry().fromWkt(wkt)
@@ -66,6 +71,7 @@ class Geokodowanie(QgsTask):
                     feat.setAttributes(wartosci)
                     self.features.append(feat)
                     unique_geometries.add(wkt)
+
             else:
                 self.bledne.append(self.miejscowosci[i] + self.delimeter + self.ulicy[i] + self.delimeter + self.numery[i] + self.delimeter + self.kody[i] + "\n")
 
@@ -80,6 +86,7 @@ class Geokodowanie(QgsTask):
 
     def geocode(self, miasto, ulica, numer, kod):
         service = "http://services.gugik.gov.pl/uug/?"
+
         if not ulica or ulica =="":
             params = {
             "request": "GetAddress", 
@@ -97,18 +104,24 @@ class Geokodowanie(QgsTask):
                 if ulica and ulica.strip() != miasto.strip()
                 else f"{kod}{miasto} {numer}"
             }
+
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = service + params_url
-        print(request_url)
+        
         try:
             response = urllib.request.urlopen(request_url).read()
+
         except urllib.error.URLError as e:
             logging.error(f"Connection failed: {e.reason}")
+
         except Exception as e:
             logging.error(f"An unexpected error occurred: {e}")
-        response_json = {}        
+
+        response_json = {}       
+
         try:
             response_json = json.loads(response.decode('utf-8'))
+
         except json.JSONDecodeError:
             logging.error("Decoding JSON has failed")
 
@@ -124,14 +137,22 @@ class Geokodowanie(QgsTask):
             
 
     def finished(self, result):
-        print("koniec?")
         if result:
             QgsMessageLog.logMessage('sukces')
-            self.iface.messageBar().pushMessage("Sukces", "Udało się! Dane BDOT10k zostały pobrane.",
-                                                level=Qgis.Success, duration=10)
+
+            self.iface.messageBar().pushMessage(
+                "Sukces", 
+                "Udało się! Dane zostały pobrane.",
+                level=Qgis.Success, 
+                duration=10
+            )
         else:
-            self.iface.messageBar().pushMessage("Błąd",
-                                                "Geokodowanie  nie powiodło się.", level=Qgis.Warning, duration=10)
+            self.iface.messageBar().pushMessage(
+                "Błąd",
+                "Geokodowanie nie powiodło się.", 
+                level=Qgis.Warning, 
+                duration=10
+            )
             self.finishedProcessing.emit(self.features, self.bledne)
 
     def cancel(self):
