@@ -36,7 +36,7 @@ class Geokodowanie(QgsTask):
             "Info: ", 
             "Zaczął się proces geokodowania.", 
             level=Qgis.Info,
-            duration=5
+            duration=10
         )
 
     def run(self):
@@ -106,20 +106,12 @@ class Geokodowanie(QgsTask):
             
 
     def finished(self, result):
-        if result:
-            QgsMessageLog.logMessage('sukces')
-            self.iface.messageBar().pushMessage(
-                "Sukces", 
-                "Udało się! Dane zostały pobrane.",
-                level=Qgis.Success, 
-                duration=5
-            )
-        else:
+        if not result:
             self.iface.messageBar().pushMessage(
                 "Błąd",
                 "Geokodowanie  nie powiodło się.", 
                 level=Qgis.Warning, 
-                duration=5
+                duration=10
             )
             self.finishedProcessing.emit(self.features, self.bledne)
 
