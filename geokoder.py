@@ -29,6 +29,7 @@ class Geokodowanie(QgsTask):
         self.featuresPoint = []
         self.bledne = []
         self.stop = False
+        
         self.iface.messageBar().pushMessage(
             "Info: ", 
             "Zaczął się procej geokodowania.", 
@@ -149,9 +150,9 @@ class Geokodowanie(QgsTask):
     def finished(self, result):
         if not result and self.stop != True:
             self.iface.messageBar().pushMessage(
-                "Błąd","Geokodowanie  nie powiodło się.",
-                  level=Qgis.Warning,
-                    duration=10
+              "Błąd","Geokodowanie  nie powiodło się.",
+              level=Qgis.Warning,
+              duration=10
             )
             self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne, False)
 
