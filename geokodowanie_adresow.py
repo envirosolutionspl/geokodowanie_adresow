@@ -444,7 +444,7 @@ class GeokodowanieAdresow:
         with open(self.outputPlik, 'w') as plik:
             plik.writelines(listaWierszy)
 
-    def geokodowanieSukces(self, featuresPoint, featuresLine, bledne):
+    def geokodowanieSukces(self, featuresPoint, featuresLine, bledne, stop):
             self.dlg.btnGeokoduj.setEnabled(True)        
             self.warstwaPoint.dataProvider().addFeatures(featuresPoint)
             self.warstwaLine.dataProvider().addFeatures(featuresLine)
@@ -457,7 +457,19 @@ class GeokodowanieAdresow:
             iloscRekordow = len(self.rekordy)
                 
             # zapisanie blednych adresow do pliku
-            if bledne or iloscZgeokodowanych == 0:  # jezeli cokolwiek zapisalo sie do listy bledne
+            if stop == True:
+                self.iface.messageBar().pushMessage(
+                    "Proces geokodowania został zatrzymany:",
+                    "Zgeokodowano %i/%i adresów. Błędnie zgeokodowane adresy zostały zapisane w pliku %s" % (
+                        iloscZgeokodowanych,
+                        iloscRekordow,
+                        self.outputPlik
+                        ), 
+                    level=Qgis.Info,
+                    duration = 5
+                )
+
+            elif bledne or iloscZgeokodowanych == 0:  # jezeli cokolwiek zapisalo sie do listy bledne
                 iloscBledow = len(bledne)
                 bledne.insert(0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n")
                 self.saveErrors(bledne)
@@ -469,21 +481,21 @@ class GeokodowanieAdresow:
                         iloscRekordow,
                         self.outputPlik
                         ), 
-                    level=Qgis.Warning,
+                    level=Qgis.Info,
                     duration = 5
                 )
 
             elif iloscZgeokodowanych > iloscRekordow:
                 self.iface.messageBar().pushMessage(
                     "Wynik geokodowania:",
-                    "Zgeokodowano %i/%i adresów. Niektóre adresy są zdublowane." % (
+                    "Zgeokodowano %i/%i adresów. Dla niektórych adresów usługa geokodowania zwróciła kilka wartości." % (
                         iloscZgeokodowanych,
                         iloscRekordow
                     ),
                     level=Qgis.Success,
                     duration = 5
                 )
-            else:
+            elif not bledne:
                 # wszytsko zgeokodowano
                 self.iface.messageBar().pushMessage(
                     "Wynik geokodowania:",

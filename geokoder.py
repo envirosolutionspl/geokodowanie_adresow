@@ -15,7 +15,7 @@ from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 
 class Geokodowanie(QgsTask):
-    finishedProcessing = pyqtSignal(list, list, list)
+    finishedProcessing = pyqtSignal(list, list, list, bool)
     def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
@@ -28,6 +28,7 @@ class Geokodowanie(QgsTask):
         self.featuresLine = []
         self.featuresPoint = []
         self.bledne = []
+        self.stop = False
         self.iface.messageBar().pushMessage(
             "Info: ", 
             "Zaczął się procej geokodowania.", 
@@ -83,10 +84,11 @@ class Geokodowanie(QgsTask):
             self.setProgress(self.progress() + 100 / total)
             # Sprawdzenie, czy zadanie zostało anulowane
             if self.isCanceled():
+                self.stop = True
                 return False
             
         # Emitowanie sygnału zakończenia przetwarzania
-        self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne)
+        self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne, False)
         return True
 
 
@@ -145,14 +147,15 @@ class Geokodowanie(QgsTask):
                 
 
     def finished(self, result):
-        if not result:
+        if not result and self.stop != True:
             self.iface.messageBar().pushMessage(
                 "Błąd","Geokodowanie  nie powiodło się.",
                   level=Qgis.Warning,
                     duration=10
             )
-            self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne)
+            self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne, False)
 
     def cancel(self):
-        self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne)
+        self.stop = True
+        self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne, self.stop)
         super().cancel()
