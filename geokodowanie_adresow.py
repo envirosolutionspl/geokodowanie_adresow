@@ -29,12 +29,12 @@ from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTy
 from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 import re
+import os.path
 
 # Initialize Qt resources from file resources.py
 from .resources import *
 # Import the code for the dialog
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
-import os.path
 from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
@@ -460,7 +460,6 @@ class GeokodowanieAdresow:
             if bledne or iloscZgeokodowanych == 0:  # jezeli cokolwiek zapisalo sie do listy bledne
                 iloscBledow = len(bledne)
                 bledne.insert(0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n")
-                print(bledne)
                 self.saveErrors(bledne)
 
                 self.iface.messageBar().pushMessage(

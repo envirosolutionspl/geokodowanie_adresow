@@ -1,9 +1,7 @@
 import urllib.request
 import urllib.parse
 import json
-import re
 import logging
-from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from qgis.core import (
     Qgis,
     QgsProject,
@@ -118,7 +116,7 @@ class Geokodowanie(QgsTask):
         # Kodowanie parametrów zapytania w URL
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = service + params_url
-        print(request_url)
+        # print(request_url)
         
         try:
             # Wysłanie zapytania do serwera i odczytanie odpowiedzi
