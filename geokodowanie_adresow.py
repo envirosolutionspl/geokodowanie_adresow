@@ -25,7 +25,7 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QToolBar
-from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject
+from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes
 from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 import re
@@ -337,10 +337,13 @@ class GeokodowanieAdresow:
             for i in range(len(headings)):
                 fields += "&field=pole%i:string(0,-1)" % (i + 1)
 
-        self.warstwa = QgsVectorLayer(
+        warstwaPoint = QgsVectorLayer(
             "Point?crs=EPSG:2180" + fields
-            , "zgeokodowane", "memory")
-        return self.warstwa
+            , "zgeokodowane punkty", "memory")
+        warstwaLine = QgsVectorLayer(
+            "LineString?crs=EPSG:2180" + fields
+            , "zgeokodowane ulicy", "memory")
+        return warstwaPoint, warstwaLine
 
     def parseCsv(self):
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
@@ -373,11 +376,11 @@ class GeokodowanieAdresow:
 
                 if self.dlg.cbxFirstRow.isChecked():
                     self.rekordy = zawartosc[1:]
-                    self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=True)
+                    self.warstwaPoint, self.warstwaLine= self.createEmptyLayer(headings=naglowki, hasHeadings=True)
                 else:
                     self.rekordy = zawartosc[:]
                     self.rekordy[0] = self.rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
-                    self.warstwa = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
+                    self.warstwaPoint, self.warstwaLine = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
 
                 # sprawdzenie czy plik CSV jest poprawny
                 if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer, idKod):
@@ -408,12 +411,12 @@ class GeokodowanieAdresow:
                     numery = numery, 
                     kody = kody,
                     delimeter = self.delimeter, 
-                    warstwa = self.warstwa, 
                     iface = self.iface,
                 )
 
                 self.taskManager.addTask(task)
-            task.finishedProcessing.connect(self.slot_function)
+                self.dlg.btnGeokoduj.setEnabled(False)  
+            task.finishedProcessing.connect(self.geokodowanieSukces)
 
     def korektaFormatu(self, numer):
         if '"' in numer:
@@ -421,7 +424,7 @@ class GeokodowanieAdresow:
         return numer
 
     def dealWithAbbreviations(self, text):
-        rep = {"al.": "aleje", "Al.": "Aleje", "Pl.": "Plac", "pl.": "plac"}
+        rep = {"al.": "aleje", "Al.": "Aleje", "Pl.": "Plac", "pl.": "plac", "ul.":"", "Ul.":""}
         rep = dict((re.escape(k), v) for k, v in rep.items())
         self.pattern = re.compile("|".join(rep.keys()))
         text = self.pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
@@ -441,18 +444,23 @@ class GeokodowanieAdresow:
         with open(self.outputPlik, 'w') as plik:
             plik.writelines(listaWierszy)
 
-    def slot_function(self, features, bledne):
-            self.dlg.btnGeokoduj.setEnabled(True)
-            self.warstwa.dataProvider().addFeatures(features)
-            self.warstwa.updateExtents()
-            self.project.addMapLayer(self.warstwa)
-            iloscZgeokodowanych = len(features)
+    def geokodowanieSukces(self, featuresPoint, featuresLine, bledne):
+            self.dlg.btnGeokoduj.setEnabled(True)        
+            self.warstwaPoint.dataProvider().addFeatures(featuresPoint)
+            self.warstwaLine.dataProvider().addFeatures(featuresLine)
+            self.warstwaLine.updateExtents()
+            self.warstwaPoint.updateExtents()
+          
+            self.project.addMapLayer(self.warstwaLine)
+            self.project.addMapLayer(self.warstwaPoint)
+            iloscZgeokodowanych = len(featuresLine) + len(featuresPoint)
             iloscRekordow = len(self.rekordy)
                 
             # zapisanie blednych adresow do pliku
             if bledne or iloscZgeokodowanych == 0:  # jezeli cokolwiek zapisalo sie do listy bledne
                 iloscBledow = len(bledne)
-                bledne.insert(0, self.naglowek)
+                bledne.insert(0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n")
+                print(bledne)
                 self.saveErrors(bledne)
 
                 self.iface.messageBar().pushMessage(
