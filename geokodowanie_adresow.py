@@ -383,10 +383,10 @@ class GeokodowanieAdresow:
 
         warstwaPoint = QgsVectorLayer(
             "Point?crs=EPSG:2180" + fields
-            , "zgeokodowane punkty", "memory")
+            , "zgeokodowane lokalizacje", "memory")
         warstwaLine = QgsVectorLayer(
             "LineString?crs=EPSG:2180" + fields
-            , "zgeokodowane ulicy", "memory")
+            , "zgeokodowane ulice", "memory")
         
         return warstwaPoint, warstwaLine
 
