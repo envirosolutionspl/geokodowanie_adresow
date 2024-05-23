@@ -119,7 +119,7 @@ class Geokodowanie(QgsTask):
         params = {"request": "GetAddress"}  # Parametry zapytania
 
         # Ustalenie parametru "address" w zależności od dostępnych danych adresowych
-        if ulica and ulica.strip() == miasto.strip() or not ulica and numer:
+        if (ulica and ulica.strip() == miasto.strip()) or (not ulica and numer):
             params["address"] = f"{kod} {miasto}, {numer}"
         elif not ulica or ulica == "": 
             params["address"] = f"{miasto}"
