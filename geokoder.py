@@ -52,12 +52,16 @@ class Geokodowanie(QgsTask):
             # Rozdzielenie rekordu na wartości
             wartosci = rekord.strip().split(self.delimeter)
             # Geokodowanie adresu
-            wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), self.kody[i].strip())
-            
-            # Jeśli pierwsze geokodowanie nie zwróci wyniku, próbuj bez kodu pocztowego
-            if not wkt:
-                wkt = self.geocode(self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), "")
-            
+            geocode_params = [
+                (self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), self.kody[i].strip()),
+                (self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), "")
+            ]
+            wkt = None
+            for params in geocode_params:
+                wkt = self.geocode(*params)
+                if wkt:
+                    break
+                
             # Jeśli geokodowanie nie zwróci wyniku, dodaj rekord do listy błędów
             if not wkt:
                 self.bledne.append(f"{self.miejscowosci[i]}{self.delimeter}{self.ulicy[i]}{self.delimeter}{self.numery[i]}{self.delimeter}{self.kody[i]}\n")
