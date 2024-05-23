@@ -14,7 +14,7 @@ from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 
 class Geokodowanie(QgsTask):
-    finishedProcessing = pyqtSignal(list, list, list, bool)
+    finishedProcessing = pyqtSignal(list, list, list, list, bool)
     def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
@@ -25,6 +25,7 @@ class Geokodowanie(QgsTask):
         self.kody = kody
         self.delimeter = delimeter
         self.featuresLine = []
+        self.featuresPoly = []
         self.featuresPoint = []
         self.bledne = []
         self.stop = False
@@ -81,6 +82,8 @@ class Geokodowanie(QgsTask):
                             self.featuresPoint.append(feat)
                         elif geometry_type == QgsWkbTypes.LineGeometry:
                             self.featuresLine.append(feat)
+                        elif geometry_type == QgsWkbTypes.PolygonGeometry:
+                            self.featuresPoly.append(feat)
                         # Dodanie geometrii do zbioru unikalnych geometrii
                         unique_geometries.add(geom_wkt)
 
@@ -92,7 +95,13 @@ class Geokodowanie(QgsTask):
                 return False
             
         # Emitowanie sygnału zakończenia przetwarzania
-        self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne, False)
+        self.finishedProcessing.emit(
+            self.featuresPoint, 
+            self.featuresLine, 
+            self.featuresPoly, 
+            self.bledne, 
+            False
+        )
         return True
 
 
@@ -157,9 +166,21 @@ class Geokodowanie(QgsTask):
               level=Qgis.Warning,
               duration=10
             )
-            self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne, False)
+            self.finishedProcessing.emit(
+                self.featuresPoint, 
+                self.featuresLine, 
+                self.featuresPoly, 
+                self.bledne, 
+                False
+            )
 
     def cancel(self):
         self.stop = True
-        self.finishedProcessing.emit(self.featuresPoint, self.featuresLine, self.bledne, self.stop)
+        self.finishedProcessing.emit(
+            self.featuresPoint, 
+            self.featuresLine, 
+            self.featuresPoly, 
+            self.bledne, 
+            self.stop
+        )
         super().cancel()

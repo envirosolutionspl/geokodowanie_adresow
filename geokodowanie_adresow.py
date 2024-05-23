@@ -387,8 +387,11 @@ class GeokodowanieAdresow:
         warstwaLine = QgsVectorLayer(
             "LineString?crs=EPSG:2180" + fields
             , "zgeokodowane ulice", "memory")
+        warstwaPoly = QgsVectorLayer(
+            "Polygon?crs=EPSG:2180" + fields
+            , "zgeokodowane place", "memory")
         
-        return warstwaPoint, warstwaLine
+        return warstwaPoint, warstwaLine, warstwaPoly
 
 
     def parseCsv(self):
@@ -445,11 +448,11 @@ class GeokodowanieAdresow:
                 # Sprawdza, czy pierwszy wiersz to nagłówek
                 if self.dlg.cbxFirstRow.isChecked():
                     self.rekordy = zawartosc[1:]
-                    self.warstwaPoint, self.warstwaLine= self.createEmptyLayer(headings=naglowki, hasHeadings=True)
+                    self.warstwaPoint, self.warstwaLine, self.warstwaPoly= self.createEmptyLayer(headings=naglowki, hasHeadings=True)
                 else:
                     self.rekordy = zawartosc[:]
                     self.rekordy[0] = self.rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
-                    self.warstwaPoint, self.warstwaLine = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
+                    self.warstwaPoint, self.warstwaLine, self.warstwaPoly = self.createEmptyLayer(headings=naglowki, hasHeadings=False)
 
                 # sprawdzenie czy plik CSV jest poprawny
                 if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer, idKod):
@@ -556,21 +559,30 @@ class GeokodowanieAdresow:
         Zapisuje błędne adresy do pliku tekstowego.
         """
         # Otwiera plik wyjściowy w trybie zapisu
-        with open(self.outputPlik, 'w') as plik:
-            
+        with open(self.outputPlik, 'w') as plik: 
             # Zapisuje wszystkie wiersze z listy do pliku
             plik.writelines(listaWierszy)
 
-    def geokodowanieSukces(self, featuresPoint, featuresLine, bledne, stop):
+    def geokodowanieSukces(
+            self, 
+            featuresPoint, 
+            featuresLine, 
+            featuresPoly, 
+            bledne, 
+            stop
+    ):
             self.dlg.btnGeokoduj.setEnabled(True)        
             self.warstwaPoint.dataProvider().addFeatures(featuresPoint)
             self.warstwaLine.dataProvider().addFeatures(featuresLine)
+            self.warstwaPoly.dataProvider().addFeatures(featuresPoly)
             self.warstwaLine.updateExtents()
+            self.warstwaPoly.updateExtents()
             self.warstwaPoint.updateExtents()
           
             self.project.addMapLayer(self.warstwaLine)
+            self.project.addMapLayer(self.warstwaPoly)
             self.project.addMapLayer(self.warstwaPoint)
-            iloscZgeokodowanych = len(featuresLine) + len(featuresPoint)
+            iloscZgeokodowanych = len(featuresLine) + len(featuresPoint) + len(featuresPoly)
             iloscRekordow = len(self.rekordy)
                 
             # zapisanie blednych adresow do pliku
