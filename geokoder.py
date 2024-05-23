@@ -1,7 +1,6 @@
 import urllib.request
 import urllib.parse
 import json
-import logging
 from qgis.core import (
     Qgis,
     QgsProject,
@@ -47,7 +46,7 @@ class Geokodowanie(QgsTask):
         """
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
-        
+        QgsMessageLog.logMessage("Zaczął się proces geokodowania.")
         for i, rekord in enumerate(self.rekordy):
             self.kilka = []
             # Rozdzielenie rekordu na wartości
@@ -119,25 +118,25 @@ class Geokodowanie(QgsTask):
         # Kodowanie parametrów zapytania w URL
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = service + params_url
-        # print(request_url)
+        QgsMessageLog.logMessage(f"Wysyłanie zapytania do api: {params}")
         
         try:
             # Wysłanie zapytania do serwera i odczytanie odpowiedzi
             response = urllib.request.urlopen(request_url).read()
             response_json = json.loads(response.decode('utf-8'))
         except urllib.error.URLError as e:
-            logging.error(f"Connection failed: {e.reason}")
+            QgsMessageLog.logMessage(f"Nie udało się połączyć z usługą API: {e.reason}")
             return None
         except json.JSONDecodeError:
-            logging.error("Decoding JSON has failed")
+            QgsMessageLog.logMessage("Nie udało się odczytać pliku JSON")
             return None
         except Exception as e:
-            logging.error(f"An unexpected error occurred: {e}")
+            QgsMessageLog.logMessage(f"Zdarzył się nieoczekiwany błąd: {e}")
             return None
 
         # Sprawdzenie czy odpowiedź zawiera wyniki
         if "results" not in response_json or not response_json["results"]:
-            logging.warning("No results found.")
+            QgsMessageLog.logMessage("Usługa API nie zwróciła odpowiedzi.")
             return None
         # Jeśli znaleziono więcej niż jeden wynik, zwróć listę geometrii WKT
         elif response_json["found objects"] > 1:
