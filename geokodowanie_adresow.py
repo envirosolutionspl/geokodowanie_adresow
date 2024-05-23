@@ -30,6 +30,7 @@ from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 import re
 import os.path
+import requests
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -236,6 +237,16 @@ class GeokodowanieAdresow:
             self.dlg.setWindowTitle('%s %s' % (plugin_name, plugin_version))
             self.dlg.lbl_pluginVersion.setText('%s %s' % (plugin_name, plugin_version))
 
+        connection = self.check_internet_connection()
+        if not connection:
+            self.iface.messageBar().pushMessage(
+                "Błąd",
+                "Brak połączenia z internetem",
+                level=Qgis.Warning,
+                duration=10
+            )
+            return
+        
         # show the dialog
         self.taskManager.cancelAll()
         self.dlg.show()
@@ -399,6 +410,15 @@ class GeokodowanieAdresow:
         przetwarza rekordy, tworzy listy wartości dla poszczególnych atrybutów i inicjuje proces geokodowania.
 
         """
+        connection = self.check_internet_connection()
+        if not connection:
+            self.iface.messageBar().pushMessage(
+                "Błąd",
+                "Brak połączenia z internetem",
+                level=Qgis.Warning,
+                duration=10
+            )
+            return
         # Pobiera indeksy wybranych atrybutów
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
@@ -622,3 +642,11 @@ class GeokodowanieAdresow:
                     level=Qgis.Success,
                     duration = 5
                 )
+   
+    def check_internet_connection(self):
+        url = 'https://www.envirosolutions.pl'
+        try:
+            response = requests.get(url, verify=False, timeout=5)
+            return response.status_code == 200
+        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            return False
