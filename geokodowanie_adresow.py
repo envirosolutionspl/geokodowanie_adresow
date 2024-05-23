@@ -571,17 +571,16 @@ class GeokodowanieAdresow:
             bledne, 
             stop
     ):
-            self.dlg.btnGeokoduj.setEnabled(True)        
+            warstwy = [self.warstwaPoint, self.warstwaLine, self.warstwaPoly]
+            self.dlg.btnGeokoduj.setEnabled(True)                       
             self.warstwaPoint.dataProvider().addFeatures(featuresPoint)
             self.warstwaLine.dataProvider().addFeatures(featuresLine)
             self.warstwaPoly.dataProvider().addFeatures(featuresPoly)
-            self.warstwaLine.updateExtents()
-            self.warstwaPoly.updateExtents()
-            self.warstwaPoint.updateExtents()
-          
-            self.project.addMapLayer(self.warstwaLine)
-            self.project.addMapLayer(self.warstwaPoly)
-            self.project.addMapLayer(self.warstwaPoint)
+            for warstwa in warstwy:
+                warstwa.updateExtents()
+                if warstwa.featureCount() > 0:
+                    self.project.addMapLayer(warstwa)
+            
             iloscZgeokodowanych = len(featuresLine) + len(featuresPoint) + len(featuresPoly)
             iloscRekordow = len(self.rekordy)
                 
