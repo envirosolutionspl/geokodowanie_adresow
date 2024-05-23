@@ -153,7 +153,8 @@ class Geokodowanie(QgsTask):
             return None
         # Jeśli znaleziono więcej niż jeden wynik, zwróć listę geometrii WKT
         elif response_json["found objects"] > 1:
-            return [response_json["results"][f"{result}"]["geometry_wkt"] for result in response_json["results"]]
+            for result in response_json["results"]:
+                return response_json["results"][f"{result}"]["geometry_wkt"]
         # W przeciwnym razie, zwróć pojedynczą geometrię WKT
         else:
             return response_json["results"]["1"]["geometry_wkt"]
