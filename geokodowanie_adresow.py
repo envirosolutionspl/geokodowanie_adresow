@@ -250,6 +250,7 @@ class GeokodowanieAdresow:
         Otwiera okno dialogowe do wyboru pliku CSV.
         Po wybraniu pliku aktualizuje interfejs użytkownika.
         """
+        # lblInputFile, lblOutputFile, btnInputFile, btnOutputFile
         # Wywołuje okno dialogowe do wyboru pliku CSV i zapisuje ścieżkę do zmiennej self.plik
         self.plik = QFileDialog.getOpenFileName(filter="Pliki CSV (*.csv)")[0]
         
