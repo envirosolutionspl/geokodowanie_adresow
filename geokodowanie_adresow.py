@@ -251,8 +251,7 @@ class GeokodowanieAdresow:
         Otwiera okno dialogowe do wyboru pliku CSV.
         Po wybraniu pliku aktualizuje interfejs użytkownika.
         """
-        # lblInputFile, lblOutputFile, btnOutputFile
-        # Wywołuje okno dialogowe do wyboru pliku CSV i zapisuje ścieżkę do zmiennej self.plik
+        # Zapisuje ścieżkę do zmiennej self.plik
         self.plik =  self.dlg.qfwInputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał plik
@@ -273,7 +272,7 @@ class GeokodowanieAdresow:
         Otwiera okno dialogowe do zapisu pliku tekstowego.
         Po wybraniu miejsca zapisu aktualizuje interfejs użytkownika.
         """
-        # Wywołuje okno dialogowe do zapisu pliku tekstowego i zapisuje ścieżkę do zmiennej self.outputPlik
+        # Zapisuje ścieżkę do zmiennej self.outputPlik
         self.outputPlik =  self.dlg.qfwOutputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał miejsce zapisu pliku
