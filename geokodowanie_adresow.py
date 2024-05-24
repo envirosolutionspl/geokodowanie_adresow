@@ -184,8 +184,10 @@ class GeokodowanieAdresow:
         return action
 
     def initGui(self):
+        self.dlg = GeokodowanieAdresowDialog()
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
+        self.dlg.qfwOutputFile.setFilter(filter="Pliki tekstowe (*.txt)")
+        self.dlg.qfwInputFile.setFilter(filter="Pliki CSV (*.csv)")
         icon_path = ':/plugins/geokodowanie_adresow/images/icon.png'
         self.add_action(
             icon_path,
@@ -210,9 +212,8 @@ class GeokodowanieAdresow:
 
         if self.first_start == True:
             self.first_start = False
-            self.dlg = GeokodowanieAdresowDialog()
-            self.dlg.btnInputFile.clicked.connect(self.openInputFile)
-            self.dlg.btnOutputFile.clicked.connect(self.saveOutputFile)
+            self.dlg.qfwInputFile.fileChanged.connect(self.openInputFile)
+            self.dlg.qfwOutputFile.fileChanged.connect(self.saveOutputFile)
             self.dlg.btnGeokoduj.clicked.connect(self.parseCsv)
             self.dlg.cbxDelimiter.currentTextChanged.connect(self.led_symbol_changed)
             self.dlg.cbxDelimiter.activated.connect(self.readHeader)
@@ -250,15 +251,12 @@ class GeokodowanieAdresow:
         Otwiera okno dialogowe do wyboru pliku CSV.
         Po wybraniu pliku aktualizuje interfejs użytkownika.
         """
-        # lblInputFile, lblOutputFile, btnInputFile, btnOutputFile
+        # lblInputFile, lblOutputFile, btnOutputFile
         # Wywołuje okno dialogowe do wyboru pliku CSV i zapisuje ścieżkę do zmiennej self.plik
-        self.plik = QFileDialog.getOpenFileName(filter="Pliki CSV (*.csv)")[0]
+        self.plik =  self.dlg.qfwInputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał plik
         if self.plik != '':
-            # Aktualizuje etykietę w interfejsie użytkownika, aby wyświetlić wybraną ścieżkę pliku
-            self.dlg.lblInputFile.setText(self.plik)
-            
             # Ustawia flagę isInputFile na True, aby oznaczyć, że plik został wybrany
             self.isInputFile = True
             
@@ -276,13 +274,10 @@ class GeokodowanieAdresow:
         Po wybraniu miejsca zapisu aktualizuje interfejs użytkownika.
         """
         # Wywołuje okno dialogowe do zapisu pliku tekstowego i zapisuje ścieżkę do zmiennej self.outputPlik
-        self.outputPlik = QFileDialog.getSaveFileName(filter="Pliki tekstowe (*.txt)")[0]
+        self.outputPlik =  self.dlg.qfwOutputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał miejsce zapisu pliku
         if self.outputPlik != '':
-            # Aktualizuje etykietę w interfejsie użytkownika, aby wyświetlić wybraną ścieżkę pliku
-            self.dlg.lblOutputFile.setText(self.outputPlik)
-            
             # Ustawia flagę isOutputFile na True, aby oznaczyć, że miejsce zapisu pliku zostało wybrane
             self.isOutputFile = True
             
