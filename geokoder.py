@@ -36,7 +36,7 @@ class Geokodowanie(QgsTask):
         
         self.iface.messageBar().pushMessage(
             "Info: ", 
-            "Zaczął się procej geokodowania.", 
+            "Zaczął się proces geokodowania.", 
             level=Qgis.Info,
             duration=10
         )
