@@ -28,7 +28,7 @@ class Geokodowanie(QgsTask):
         self.featuresPoly = []
         self.featuresPoint = []
         self.bledne = []
-        self.stop = False
+        self.service = "http://services.gugik.gov.pl/uug/?"  # Adres usługi geokodowania GUGiK
         
         self.iface.messageBar().pushMessage(
             "Info: ", 
@@ -45,6 +45,7 @@ class Geokodowanie(QgsTask):
         Zwraca:
             bool: True, jeśli przetwarzanie zakończyło się sukcesem, False w przypadku anulowania.
         """
+        self.stop = False
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
         QgsMessageLog.logMessage("Zaczął się proces geokodowania.")
@@ -115,7 +116,6 @@ class Geokodowanie(QgsTask):
             str: Geometria w formacie WKT (Well-Known Text) lub lista geometrii WKT, jeśli znaleziono więcej niż jeden wynik.
         """
         
-        service = "http://services.gugik.gov.pl/uug/?"  # Adres usługi geokodowania GUGiK
         params = {"request": "GetAddress"}  # Parametry zapytania
 
         # Ustalenie parametru "address" w zależności od dostępnych danych adresowych
@@ -130,7 +130,7 @@ class Geokodowanie(QgsTask):
         
         # Kodowanie parametrów zapytania w URL
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-        request_url = service + params_url
+        request_url = self.service + params_url
         QgsMessageLog.logMessage(f"Wysyłanie zapytania do api: {params}")
         
         try:

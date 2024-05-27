@@ -29,7 +29,7 @@ from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject
 from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 import re
-import os.path
+from os import path
 
 # Initialize Qt resources from file resources.pys
 from .resources import *
@@ -62,15 +62,15 @@ class GeokodowanieAdresow:
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
-        self.plugin_dir = os.path.dirname(__file__)
+        self.plugin_dir = path.dirname(__file__)
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = os.path.join(
+        locale_path = path.join(
             self.plugin_dir,
             'i18n',
             'GeokodowanieAdresow_{}.qm'.format(locale))
 
-        if os.path.exists(locale_path):
+        if path.exists(locale_path):
             self.translator = QTranslator()
             self.translator.load(locale_path)
             QCoreApplication.installTranslator(self.translator)
