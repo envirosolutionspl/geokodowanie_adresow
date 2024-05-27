@@ -22,7 +22,13 @@ hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
   Version 1.2.0
+  * Ulepszony Interfejs wtyczki
+  * Dodane wsparcie linii i poligonów (ulice i place)
+  * Wsparcie większej ilości znaków rozdzielających w pliku .csv
+  * Poprawa błędu przy użyciu innych geokodowań niż UTF-8
+  * Poprawa błędu dekodowacia plików JSON
   * Poprawa błędów dla wersji poniżej 3.10
+  *  błędu prz geokodowaniu z cudzysłowami.
   Version 1.1.5
   * Dodanie wiadomości o nowościach GIS
   Version 1.1.4
