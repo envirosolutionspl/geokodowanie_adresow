@@ -31,7 +31,7 @@ from . import encoding
 from os import path
 import re
 import requests
-
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # Initialize Qt resources from file resources.pys
 from .resources import *
@@ -210,7 +210,7 @@ class GeokodowanieAdresow:
 
     def run(self):
         """Run method that performs all the real work"""
-
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         if self.first_start == True:
             self.first_start = False
             self.dlg = GeokodowanieAdresowDialog()
@@ -700,9 +700,10 @@ class GeokodowanieAdresow:
         try:
             session = requests.Session()
             with session.get(url='https://www.envirosolutions.pl', verify=False) as resp:
-                if resp.status_code!= 200:
+                if resp.status_code != 200:
                     return False
-                else:
-                    return True
+                return True
         except requests.exceptions.ConnectionError:
             return False
+        finally:
+            session.close()
