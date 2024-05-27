@@ -49,7 +49,6 @@ class Geokodowanie(QgsTask):
             bool: True, jeśli przetwarzanie zakończyło się sukcesem, False w przypadku anulowania.
         """
 
-        self.stop = False
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
         QgsMessageLog.logMessage("Zaczął się proces geokodowania.")
@@ -136,6 +135,7 @@ class Geokodowanie(QgsTask):
         # Kodowanie parametrów zapytania w URL
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = self.service + params_url
+
         QgsMessageLog.logMessage(f"Wysyłanie zapytania do api: {params}")
         
         try:

@@ -29,9 +29,10 @@ from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTy
 from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 from os import path
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import re
 import requests
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
 
 # Initialize Qt resources from file resources.pys
 from .resources import *
@@ -94,6 +95,7 @@ class GeokodowanieAdresow:
         self.taskManager = QgsApplication.taskManager()
         self.project = QgsProject.instance()
 
+        
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -106,9 +108,11 @@ class GeokodowanieAdresow:
         :returns: Translated version of message.
         :rtype: QString
         """
+        
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('GeokodowanieAdresow', message)
 
+      
     def add_action(
             self,
             icon_path,
@@ -121,7 +125,6 @@ class GeokodowanieAdresow:
             whats_this=None,
             parent=None
         ):
-        
         """Add a toolbar icon to the toolbar.
 
         :param icon_path: Path to the icon for this action. Can be a resource
@@ -186,6 +189,7 @@ class GeokodowanieAdresow:
 
         return action
 
+      
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
 
@@ -199,8 +203,10 @@ class GeokodowanieAdresow:
         # will be set False in run()
         self.first_start = True
 
+        
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
+        
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&EnviroSolutions'),
@@ -208,8 +214,10 @@ class GeokodowanieAdresow:
             # self.iface.removeToolBarIcon(action)
             self.toolbar.removeAction(action)
 
+            
     def run(self):
         """Run method that performs all the real work"""
+        
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         if self.first_start == True:
             self.first_start = False
@@ -258,11 +266,13 @@ class GeokodowanieAdresow:
             if result:
                 pass
 
+              
     def openInputFile(self):
         """
         Otwiera okno dialogowe do wyboru pliku CSV.
         Po wybraniu pliku aktualizuje interfejs użytkownika.
         """
+        
         # Wywołuje okno dialogowe do wyboru pliku CSV i zapisuje ścieżkę do zmiennej self.plik
         self.plik = QFileDialog.getOpenFileName(filter="Pliki CSV (*.csv)")[0]
         
@@ -282,11 +292,13 @@ class GeokodowanieAdresow:
             # Wywołuje funkcję readHeader() w celu odczytania nagłówków pliku CSV
             self.readHeader()
 
+            
     def saveOutputFile(self):
         """
         Otwiera okno dialogowe do zapisu pliku tekstowego.
         Po wybraniu miejsca zapisu aktualizuje interfejs użytkownika.
         """
+        
         # Wywołuje okno dialogowe do zapisu pliku tekstowego i zapisuje ścieżkę do zmiennej self.outputPlik
         self.outputPlik = QFileDialog.getSaveFileName(filter="Pliki tekstowe (*.txt)")[0]
         
@@ -303,6 +315,7 @@ class GeokodowanieAdresow:
             if self.isInputFile and self.isOutputFile:
                 self.dlg.btnGeokoduj.setEnabled(True)
 
+                
     def readHeader(self):
         """
         Czyści ComboBoxy w interfejsie użytkownika.
@@ -313,6 +326,7 @@ class GeokodowanieAdresow:
         W przeciwnym razie odczytuje elementy nagłówka, rozdzielając je na listę elementów za pomocą określonego separatora (delimeter).
         Następnie dodaje elementy nagłówka do odpowiednich ComboBoxów w interfejsie użytkownika.
         """
+        
         # Czyści ComboBoxy w interfejsie użytkownika
         self.dlg.cbxMiejscowosc.clear()
         self.dlg.cbxUlica.clear()
@@ -347,6 +361,7 @@ class GeokodowanieAdresow:
                 self.dlg.cbxNumer.addItems(elementyNaglowkow)
                 self.dlg.cbxKod.addItems(elementyNaglowkow)
 
+                
     def csvCheck(
             self, 
             rekordy, 
@@ -355,8 +370,8 @@ class GeokodowanieAdresow:
             idNumer, 
             idKod
         ):
-        
         """Sprawdzenie poprawności CSV"""
+        
         for rekord in rekordy:  # rekord:
             wartosci = rekord.strip().split(self.delimeter)  # lista wartosci w ramach jednego rekordu          
             try:
@@ -379,6 +394,7 @@ class GeokodowanieAdresow:
                 return False  # wystąpiły błędy
         return True  # poprawnie wczytano wszystkie wiersze
 
+      
     def createEmptyLayer(
             self, 
             headings, 
@@ -395,6 +411,7 @@ class GeokodowanieAdresow:
         :param hasHeadings: Określa, czy nagłówki są dostępne (domyślnie True).
         :return: Obiekt warstwy wektorowej.
         """
+        
         # Ciąg pól warstwy na podstawie nagłówków lub indeksów
         fields = ''
         if hasHeadings:
@@ -415,7 +432,7 @@ class GeokodowanieAdresow:
             , "zgeokodowane place", "memory")
         
         return warstwaPoint, warstwaLine, warstwaPoly
-      
+
 
     def parseCsv(self):
         """
@@ -425,6 +442,7 @@ class GeokodowanieAdresow:
         przetwarza rekordy, tworzy listy wartości dla poszczególnych atrybutów i inicjuje proces geokodowania.
 
         """
+        
         connection = self.check_internet_connection()
         if not connection:
             self.iface.messageBar().pushMessage(
@@ -541,12 +559,14 @@ class GeokodowanieAdresow:
         Jeśli tak, usuwa go.
         Zwraca skorygowany numer.
         """
+        
         # Sprawdza, czy cudzysłów występuje w numerze
         if '"' in numer:
             # Usuwa cudzysłów
             numer = numer.replace('"', '')
         return numer
 
+      
     def dealWithAbbreviations(self, text):
         """
         Przetwarza skróty na pełne nazwy.
@@ -573,14 +593,15 @@ class GeokodowanieAdresow:
         # Zwraca przekształcony tekst
         return text    
 
+      
     def led_symbol_changed(self):
         """
         Obsługuje zmianę symbolu separacji.
 
         Aktualizuje zmienną self.delimeter na podstawie wybranej opcji
         z listy rozwijanej w interfejsie użytkownika.
-
         """
+        
         # Aktualizuje self.delimeter na podstawie aktualnie wybranej opcji
         self.delimeter = self.dlg.cbxDelimiter.currentText()
 
@@ -592,16 +613,18 @@ class GeokodowanieAdresow:
         if self.delimeter == "Spacja":
             self.delimeter = ' '
 
+            
     def saveErrors(self, listaWierszy):
         """
         Zapisuje błędne adresy do pliku tekstowego.
         """
+        
         # Otwiera plik wyjściowy w trybie zapisu
         with open(self.outputPlik, 'w') as plik: 
             # Zapisuje wszystkie wiersze z listy do pliku
             plik.writelines(listaWierszy)
 
-            
+
     def geokodowanieSukces(
                 self, 
                 featuresPoint, 
@@ -621,6 +644,7 @@ class GeokodowanieAdresow:
             bledne (list): Lista błędnych adresów, które nie zostały zgeokodowane.
             stop (bool): Flaga wskazująca, czy proces geokodowania został zatrzymany.
         """
+        
         # Zgrupowanie warstw do jednej listy
         warstwy = [self.warstwaPoint, self.warstwaLine, self.warstwaPoly]
         
