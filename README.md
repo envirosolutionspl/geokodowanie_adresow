@@ -4,23 +4,22 @@
 
 Wtyczka Qgis, która umożliwia lokalizację przestrzenną wybranego punktu adresowego, ulicy lub miejscowości. Pobieranie danych jest realizowane przez usługę UUG udostępnianą przez Główny Urząd Geodezji i Kartografii. Obsługuje pliki CSV. Plik może (ale nie musi) zawierać nagłówki.
 
-## Instrukcja pobrania
+### Instrukcja pobrania
 1. Wtyczkę należy zainstalować w QGISie jako ZIP bądź wgrać pliki wtyczki do lokalizacji C:\Users\User\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins.
 2. Aby uruchomić wtyczkę należy kliknąć na ikonę zielonego drzewa oznaczonego napisem ULDK.
 3. Jeżeli ikona wtyczki nie jest widoczna w panelu warstw, spróbuj zrestartować QGIS.
 4. Jeżeli wtyczka nadal nie jest widoczna  należy przejść w QGIS Desktop do Wtyczki -> Zarządzanie wtyczkami -> Zainstalowane -> geokodowanie_uug -> Odinstalować wtyczkę, i zainstalować ponownie.<br>
 
-## Instrukcja użytkowania:
-1. Dla uruchomienia procesu geokodowania należy wybrać 2 pliki: Plik z adresami w formacie .csv oraz plik do zapisywania niezgeokodowanych adrsów w formacie .txt.
-2. Przed geokodowaniem warto sprawdzić, czy system kodowania we wtyczce zgadza się z systemem kodowania w pliku z adresami.
-3. Jeżeli zaznaczyć opcję "Pierwszy wiersz zawiera nazwy kolumn", to on nie będzie brany pod uwagę w trakcie geokodowania.
-4. Wtyczka, w zależności od danych źródłowych i ustaleń użytkownika, może zwracać punkty (budynki, miejscowości), linie (ulice) lub poligony (place).
-5. 
+### Instrukcja użytkowania:
+* Aby uruchomić proces geokodowania, należy wybrać dwa pliki: plik z adresami w formacie .csv oraz plik do zapisywania niezgeokodowanych adresów w formacie .txt.
+* Przed geokodowaniem warto sprawdzić, czy system kodowania we wtyczce zgadza się z systemem kodowania w pliku z adresami.
+* Jeśli zaznaczysz opcję "Pierwszy wiersz zawiera nazwy kolumn", to ten wiersz nie będzie brany pod uwagę podczas geokodowania.
+* Wtyczka, w zależności od danych źródłowych i ustaleń użytkownika, może zwracać punkty (budynki, miejscowości), linie (ulice) lub poligony (place).
 
-### Uwaga 
-1. Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.16.16 lub wyższej.
-2. Dla niektórych adresó brak jest kodów pocztowych w bazie GUGiK, należy wtedy użyć 00-000 lub wartości pustej
-3. Jeżeli usługa zwróci kilka punktów adresowych, wszystkie one zostaną dodane do warstw wynikowych.
+### Uwaga:
+* Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.16.16 lub wyższej.
+* Dla niektórych adresów brak jest kodów pocztowych w bazie GUGiK. Należy wtedy użyć 00-000 lub wartości pustej.
+* Jeśli usługa zwróci kilka punktów adresowych, wszystkie zostaną dodane do warstw wynikowych.
 
 ## changelog
   Version 1.1.3
