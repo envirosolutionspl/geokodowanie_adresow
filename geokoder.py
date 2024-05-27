@@ -32,7 +32,6 @@ class Geokodowanie(QgsTask):
         self.featuresPoint = []
         self.bledne = []
         self.service = "http://services.gugik.gov.pl/uug/?"  # Adres usługi geokodowania GUGiK
-
         
         self.iface.messageBar().pushMessage(
             "Info: ", 
@@ -53,13 +52,11 @@ class Geokodowanie(QgsTask):
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
         QgsMessageLog.logMessage("Zaczął się proces geokodowania.")
-
         for i, rekord in enumerate(self.rekordy):
             self.kilka = []
             # Rozdzielenie rekordu na wartości
             wartosci = rekord.strip().split(self.delimeter)
             # Geokodowanie adresu
-
             geocode_params = [
                 (self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), self.kody[i].strip()),
                 (self.miejscowosci[i].strip(), self.ulicy[i].strip(), self.numery[i].strip(), "")
@@ -91,7 +88,6 @@ class Geokodowanie(QgsTask):
                             self.featuresLine.append(feat)
                         elif geometry_type == QgsWkbTypes.PolygonGeometry:
                             self.featuresPoly.append(feat)
-
                         # Dodanie geometrii do zbioru unikalnych geometrii
                         unique_geometries.add(geom_wkt)
 
@@ -103,6 +99,7 @@ class Geokodowanie(QgsTask):
                 return False
             
         # Emitowanie sygnału zakończenia przetwarzania
+
         self.finishedProcessing.emit(
             self.featuresPoint, 
             self.featuresLine, 
@@ -193,3 +190,4 @@ class Geokodowanie(QgsTask):
             self.stop
         )
         super().cancel()
+        
