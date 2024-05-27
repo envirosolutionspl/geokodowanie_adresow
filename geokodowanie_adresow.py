@@ -191,8 +191,10 @@ class GeokodowanieAdresow:
 
       
     def initGui(self):
+        self.dlg = GeokodowanieAdresowDialog()
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
+        self.dlg.qfwOutputFile.setFilter(filter="Pliki tekstowe (*.txt)")
+        self.dlg.qfwInputFile.setFilter(filter="Pliki CSV (*.csv)")
         icon_path = ':/plugins/geokodowanie_adresow/images/icon.png'
         self.add_action(
             icon_path,
@@ -221,9 +223,8 @@ class GeokodowanieAdresow:
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         if self.first_start == True:
             self.first_start = False
-            self.dlg = GeokodowanieAdresowDialog()
-            self.dlg.btnInputFile.clicked.connect(self.openInputFile)
-            self.dlg.btnOutputFile.clicked.connect(self.saveOutputFile)
+            self.dlg.qfwInputFile.fileChanged.connect(self.openInputFile)
+            self.dlg.qfwOutputFile.fileChanged.connect(self.saveOutputFile)
             self.dlg.btnGeokoduj.clicked.connect(self.parseCsv)
             self.dlg.cbxDelimiter.currentTextChanged.connect(self.led_symbol_changed)
             self.dlg.cbxDelimiter.activated.connect(self.readHeader)
@@ -272,15 +273,12 @@ class GeokodowanieAdresow:
         Otwiera okno dialogowe do wyboru pliku CSV.
         Po wybraniu pliku aktualizuje interfejs użytkownika.
         """
-        
+
         # Wywołuje okno dialogowe do wyboru pliku CSV i zapisuje ścieżkę do zmiennej self.plik
-        self.plik = QFileDialog.getOpenFileName(filter="Pliki CSV (*.csv)")[0]
+        self.inputPlik = self.dlg.qfwInputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał plik
-        if self.plik != '':
-            # Aktualizuje etykietę w interfejsie użytkownika, aby wyświetlić wybraną ścieżkę pliku
-            self.dlg.lblInputFile.setText(self.plik)
-            
+        if self.inputPlik != '':
             # Ustawia flagę isInputFile na True, aby oznaczyć, że plik został wybrany
             self.isInputFile = True
             
@@ -300,13 +298,10 @@ class GeokodowanieAdresow:
         """
         
         # Wywołuje okno dialogowe do zapisu pliku tekstowego i zapisuje ścieżkę do zmiennej self.outputPlik
-        self.outputPlik = QFileDialog.getSaveFileName(filter="Pliki tekstowe (*.txt)")[0]
+        self.outputPlik = self.dlg.qfwOutputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał miejsce zapisu pliku
         if self.outputPlik != '':
-            # Aktualizuje etykietę w interfejsie użytkownika, aby wyświetlić wybraną ścieżkę pliku
-            self.dlg.lblOutputFile.setText(self.outputPlik)
-            
             # Ustawia flagę isOutputFile na True, aby oznaczyć, że miejsce zapisu pliku zostało wybrane
             self.isOutputFile = True
             
@@ -336,7 +331,7 @@ class GeokodowanieAdresow:
         # Sprawdza, czy plik wejściowy został wybrany
         if self.isInputFile:
             # Otwiera plik z wybraną ścieżką, odczytuje pierwszą linię (nagłówek) i przypisuje do zmiennej naglowki
-            with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+            with open(self.inputPlik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
                 try:
                     naglowki = plik.readline()
                 except UnicodeDecodeError:
@@ -483,7 +478,7 @@ class GeokodowanieAdresow:
             kody = []
 
             # Otwiera plik CSV i przetwarza jego zawartość
-            with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+            with open(self.inputPlik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
                 
                 try:
                     zawartosc = plik.readlines()  # całość jako lista tekstowych linijek
@@ -497,7 +492,6 @@ class GeokodowanieAdresow:
                 # Sprawdza, czy pierwszy wiersz to nagłówek
                 if self.dlg.cbxFirstRow.isChecked():
                     self.rekordy = zawartosc[1:]
-
                     self.warstwaPoint, self.warstwaLine, self.warstwaPoly= self.createEmptyLayer(
                         headings=naglowki, 
                         hasHeadings=True
