@@ -25,11 +25,13 @@
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QToolBar
-from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject
+from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes
 from PyQt5.QtWidgets import QFileDialog
 from . import encoding
-import re
 from os import path
+import re
+import requests
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
 # Initialize Qt resources from file resources.pys
 from .resources import *
@@ -208,7 +210,7 @@ class GeokodowanieAdresow:
 
     def run(self):
         """Run method that performs all the real work"""
-
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         if self.first_start == True:
             self.first_start = False
             self.dlg = GeokodowanieAdresowDialog()
@@ -237,14 +239,24 @@ class GeokodowanieAdresow:
             self.dlg.setWindowTitle('%s %s' % (plugin_name, plugin_version))
             self.dlg.lbl_pluginVersion.setText('%s %s' % (plugin_name, plugin_version))
 
-        # show the dialog
-        self.taskManager.cancelAll()
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            pass
+        connection = self.check_internet_connection()
+        if not connection:
+            self.iface.messageBar().pushMessage(
+                "Błąd",
+                "Brak połączenia z internetem",
+                level=Qgis.Warning,
+                duration=10
+            )
+            return
+        else:
+            # show the dialog
+            self.taskManager.cancelAll()
+            self.dlg.show()
+            # Run the dialog event loop
+            result = self.dlg.exec_()
+            # See if OK was pressed
+            if result:
+                pass
 
     def openInputFile(self):
         """
@@ -403,7 +415,7 @@ class GeokodowanieAdresow:
             , "zgeokodowane place", "memory")
         
         return warstwaPoint, warstwaLine, warstwaPoly
-
+      
 
     def parseCsv(self):
         """
@@ -413,6 +425,15 @@ class GeokodowanieAdresow:
         przetwarza rekordy, tworzy listy wartości dla poszczególnych atrybutów i inicjuje proces geokodowania.
 
         """
+        connection = self.check_internet_connection()
+        if not connection:
+            self.iface.messageBar().pushMessage(
+                "Błąd",
+                "Brak połączenia z internetem",
+                level=Qgis.Warning,
+                duration=10
+            )
+            return
         # Pobiera indeksy wybranych atrybutów
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
@@ -458,6 +479,7 @@ class GeokodowanieAdresow:
                 # Sprawdza, czy pierwszy wiersz to nagłówek
                 if self.dlg.cbxFirstRow.isChecked():
                     self.rekordy = zawartosc[1:]
+
                     self.warstwaPoint, self.warstwaLine, self.warstwaPoly= self.createEmptyLayer(
                         headings=naglowki, 
                         hasHeadings=True
@@ -579,6 +601,7 @@ class GeokodowanieAdresow:
             # Zapisuje wszystkie wiersze z listy do pliku
             plik.writelines(listaWierszy)
 
+            
     def geokodowanieSukces(
                 self, 
                 featuresPoint, 
@@ -646,7 +669,7 @@ class GeokodowanieAdresow:
                     self.outputPlik
                 ), 
                 level=Qgis.Info,
-                duration=10
+                duration=5
             )
         
         # Wyświetlenie komunikatu, jeśli liczba zgeokodowanych adresów jest większa niż liczba rekordów
@@ -658,7 +681,7 @@ class GeokodowanieAdresow:
                     iloscRekordow
                 ),
                 level=Qgis.Success,
-                duration=10
+                duration=5
             )
         
         # Wyświetlenie komunikatu, jeśli wszystkie adresy zostały poprawnie zgeokodowane
@@ -669,5 +692,18 @@ class GeokodowanieAdresow:
                     iloscZgeokodowanych
                 ),
                 level=Qgis.Success,
-                duration=10
+                duration=5
             )
+            
+            
+    def check_internet_connection(self):
+        try:
+            session = requests.Session()
+            with session.get(url='https://www.envirosolutions.pl', verify=False) as resp:
+                if resp.status_code != 200:
+                    return False
+                return True
+        except requests.exceptions.ConnectionError:
+            return False
+        finally:
+            session.close()

@@ -1,6 +1,7 @@
 import urllib.request
 import urllib.parse
 import json
+
 from qgis.core import (
     Qgis,
     QgsProject,
@@ -15,6 +16,7 @@ from qgis.PyQt.QtCore import QObject, pyqtSignal
 
 class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list, list, list, bool)
+
     def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
@@ -25,6 +27,7 @@ class Geokodowanie(QgsTask):
         self.kody = kody
         self.delimeter = delimeter
         self.featuresLine = []
+
         self.featuresPoly = []
         self.featuresPoint = []
         self.bledne = []
@@ -45,6 +48,7 @@ class Geokodowanie(QgsTask):
         Zwraca:
             bool: True, jeśli przetwarzanie zakończyło się sukcesem, False w przypadku anulowania.
         """
+
         self.stop = False
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
@@ -96,6 +100,7 @@ class Geokodowanie(QgsTask):
                 return False
             
         # Emitowanie sygnału zakończenia przetwarzania
+
         self.finishedProcessing.emit(
             self.featuresPoint, 
             self.featuresLine, 
