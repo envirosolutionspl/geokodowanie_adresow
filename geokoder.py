@@ -32,7 +32,7 @@ class Geokodowanie(QgsTask):
         
         self.iface.messageBar().pushMessage(
             "Info: ", 
-            "Zaczął się procej geokodowania.", 
+            "Zaczął się proces geokodowania.", 
             level=Qgis.Info,
             duration=10
         )
@@ -49,7 +49,7 @@ class Geokodowanie(QgsTask):
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
         
         for i, rekord in enumerate(self.rekordy):
-            self.kilka = []
+
             # Rozdzielenie rekordu na wartości
             wartosci = rekord.strip().split(self.delimeter)
             # Geokodowanie adresu
@@ -119,7 +119,6 @@ class Geokodowanie(QgsTask):
         # Kodowanie parametrów zapytania w URL
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = service + params_url
-        # print(request_url)
         
         try:
             # Wysłanie zapytania do serwera i odczytanie odpowiedzi

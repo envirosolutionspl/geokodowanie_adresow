@@ -246,15 +246,15 @@ class GeokodowanieAdresow:
                 duration=10
             )
             return
-        
-        # show the dialog
-        self.taskManager.cancelAll()
-        self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            pass
+        else:
+            # show the dialog
+            self.taskManager.cancelAll()
+            self.dlg.show()
+            # Run the dialog event loop
+            result = self.dlg.exec_()
+            # See if OK was pressed
+            if result:
+                pass
 
     def openInputFile(self):
         """
@@ -644,9 +644,11 @@ class GeokodowanieAdresow:
                 )
    
     def check_internet_connection(self):
-        url = 'https://www.envirosolutions.pl'
         try:
-            response = requests.get(url, verify=False, timeout=5)
-            return response.status_code == 200
-        except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+            session = requests.Session()
+            with session.get(url='https://www.envirosolutions.pl', verify=False) as resp:
+                if resp.status_code!= 200:
+                    return False
+                return True
+        except requests.exceptions.ConnectionError:
             return False
