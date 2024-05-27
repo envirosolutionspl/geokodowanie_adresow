@@ -275,10 +275,10 @@ class GeokodowanieAdresow:
         """
 
         # Wywołuje okno dialogowe do wyboru pliku CSV i zapisuje ścieżkę do zmiennej self.plik
-        self.plik = QFileDialog.getOpenFileName(filter="Pliki CSV (*.csv)")[0]
+        self.inputPlik = self.dlg.qfwInputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał plik
-        if self.plik != '':
+        if self.inputPlik != '':
             # Ustawia flagę isInputFile na True, aby oznaczyć, że plik został wybrany
             self.isInputFile = True
             
@@ -298,7 +298,7 @@ class GeokodowanieAdresow:
         """
         
         # Wywołuje okno dialogowe do zapisu pliku tekstowego i zapisuje ścieżkę do zmiennej self.outputPlik
-        self.outputPlik = QFileDialog.getSaveFileName(filter="Pliki tekstowe (*.txt)")[0]
+        self.outputPlik = self.dlg.qfwOutputFile.filePath()
         
         # Sprawdza, czy użytkownik wybrał miejsce zapisu pliku
         if self.outputPlik != '':
@@ -331,7 +331,7 @@ class GeokodowanieAdresow:
         # Sprawdza, czy plik wejściowy został wybrany
         if self.isInputFile:
             # Otwiera plik z wybraną ścieżką, odczytuje pierwszą linię (nagłówek) i przypisuje do zmiennej naglowki
-            with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+            with open(self.inputPlik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
                 try:
                     naglowki = plik.readline()
                 except UnicodeDecodeError:
@@ -478,7 +478,7 @@ class GeokodowanieAdresow:
             kody = []
 
             # Otwiera plik CSV i przetwarza jego zawartość
-            with open(self.plik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+            with open(self.inputPlik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
                 
                 try:
                     zawartosc = plik.readlines()  # całość jako lista tekstowych linijek
