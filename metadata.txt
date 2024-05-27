@@ -21,31 +21,31 @@ repository=https://github.com/envirosolutionspl/geokodowanie_uug
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
-  Version 1.2.0
-  * Ulepszony Interfejs wtyczki
-  * Dodane wsparcie linii i poligonów (ulice i place)
+  Wersja 1.2.0
+  * Ulepszony Interfejsu wtyczki
+  * Dodanie wsparcia linii i poligonów (ulice i place)
   * Wsparcie większej ilości znaków rozdzielających w pliku .csv
   * Poprawa błędu przy użyciu innych geokodowań niż UTF-8
-  * Poprawa błędu dekodowacia plików JSON
+  * Poprawa błędu dekodowania plików JSON
   * Poprawa błędów dla wersji poniżej 3.10
-  *  błędu prz geokodowaniu z cudzysłowami.
-  Version 1.1.5
-  * Dodanie wiadomości o nowościach GIS
-  Version 1.1.4
-  * Dodanie ponownego wyszukiwania bez kodu gdy wyszukanie z kodem nie zwraca wyniku (próba obejścia błędów usługi)
-  Version 1.1.3
-  * wyszukuje adresy 'wiejskie' gdy nazwa ulicy jest pusta lub taka jak miejscowość
-  Version 1.1.2
-  * dodanie wszystkich pól z pliku wejściowego w warstwie wynikowej
-  * sprawdzanie całego pliku z adresami przed rozpoczeciem geokodowania
-  * dodanie komunikatów o błędach w pliku wejściowym
-  * poprawa geokodowania plików bez nagłówków
-  Version 1.1.1
-  * poprawy błędów
-  * rozwinięcie skrótów al. i pl. w nazwach ulic w celu zwiększenia skuteczności
-  Version 1.1.0
-  * dodanie możliwości definicji separatora kolumn
-  * poprawy błędów
+  * Poprawa błędu przy geokodowaniu z cudzysłowami.
+# Wersja 1.1.5
+# * Dodanie wiadomości o nowościach GIS
+#  Wersja 1.1.4
+# * Dodanie ponownego wyszukiwania bez kodu gdy wyszukanie z kodem nie zwraca wyniku (próba obejścia błędów usługi)
+#  Wersja 1.1.3
+#  * wyszukuje adresy 'wiejskie' gdy nazwa ulicy jest pusta lub taka jak miejscowość
+#  Wersja 1.1.2
+#  * dodanie wszystkich pól z pliku wejściowego w warstwie wynikowej
+#  * sprawdzanie całego pliku z adresami przed rozpoczeciem geokodowania
+#  * dodanie komunikatów o błędach w pliku wejściowym
+#  * poprawa geokodowania plików bez nagłówków
+#  Wersja 1.1.1
+#  * poprawy błędów
+#  * rozwinięcie skrótów al. i pl. w nazwach ulic w celu zwiększenia skuteczności
+#  Wersja 1.1.0
+#  * dodanie możliwości definicji separatora kolumn
+#  * poprawy błędów
   
 # Tags are comma separated with spaces allowed
 tags=python
