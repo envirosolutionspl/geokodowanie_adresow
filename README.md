@@ -4,7 +4,7 @@
 
 Wtyczka QGIS, która umożliwia lokalizację przestrzenną wybranego punktu adresowego, ulicy lub miejscowości. Pobieranie danych jest realizowane przez usługę UUG udostępnianą przez Główny Urząd Geodezji i Kartografii. Obsługuje pliki CSV, które mogą (ale nie muszą) zawierać nagłówki.
 
-### Instrukcja pobrania
+### Instrukcja pobrania:
 1. Wtyczkę należy zainstalować w QGIS jako ZIP bądź wgrać pliki wtyczki do lokalizacji C:\Users\User\AppData\Roaming\QGIS\QGIS3\profiles\default\python\plugins.
 2. Aby uruchomić wtyczkę, należy kliknąć na ikonę zielonego drzewa.
 3. Jeżeli ikona wtyczki nie jest widoczna w panelu warstw, spróbuj zrestartować QGIS.
