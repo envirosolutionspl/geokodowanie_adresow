@@ -408,11 +408,7 @@
    <item row="3" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
-      <widget class="QgsFileWidget" name="qfwOutputFile">
-       <property name="storageMode">
-        <enum>QgsFileWidget::SaveFile</enum>
-       </property>
-      </widget>
+      <widget class="QgsFileWidget" name="qfwOutputFile"/>
      </item>
     </layout>
    </item>
