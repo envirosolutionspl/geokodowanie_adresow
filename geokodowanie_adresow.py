@@ -30,6 +30,7 @@ from PyQt5.QtWidgets import QFileDialog
 from . import encoding
 from os import path
 import re
+import requests
 
 
 # Initialize Qt resources from file resources.pys
@@ -701,6 +702,7 @@ class GeokodowanieAdresow:
             with session.get(url='https://www.envirosolutions.pl', verify=False) as resp:
                 if resp.status_code!= 200:
                     return False
-                return True
+                else:
+                    return True
         except requests.exceptions.ConnectionError:
             return False
