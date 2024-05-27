@@ -41,7 +41,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
-plugin_version = '1.1.7'
+plugin_version = '1.2.0'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 

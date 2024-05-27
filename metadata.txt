@@ -4,9 +4,9 @@
 
 [general]
 name=Geokodowanie Adresów UUG GUGiK
-qgisMinimumVersion=3.0
+qgisMinimumVersion=3.16.16
 description=PL: Wtyczka geokoduje adresy z pliku CSV do warstwy punktowej przy wykorzystaniu usługi UUG GUGiK. EN: The plugin geocodes CSV file od addresses for Poland. It uses UUG GUGiK web service.
-version=1.1.7
+version=1.2.0
 author=EnviroSolutions Sp. z o.o.
 email=office@envirosolutions.pl
 
@@ -21,7 +21,7 @@ repository=https://github.com/envirosolutionspl/geokodowanie_uug
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
-  Version 1.1.7
+  Version 1.2.0
   * Poprawa błędów dla wersji poniżej 3.10
   Version 1.1.5
   * Dodanie wiadomości o nowościach GIS
