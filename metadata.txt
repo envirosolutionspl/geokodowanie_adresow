@@ -52,7 +52,7 @@ changelog=
 # Tags are comma separated with spaces allowed
 tags=python
 
-homepage=https://www.envirosolutions.pl/wtyczka-qgis-geokodowanie-adresow-uug
+homepage=https://github.com/envirosolutionspl/geokodowanie_uug
 category=Plugins
 icon=images/icon.png
 # experimental flag
