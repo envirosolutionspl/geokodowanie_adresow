@@ -56,7 +56,7 @@ tags=python
 
 homepage=https://github.com/envirosolutionspl/geokodowanie_uug
 category=Plugins
-icon=images/icon.png
+icon=images/icon_uug.svg
 # experimental flag
 experimental=False
 

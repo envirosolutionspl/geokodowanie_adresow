@@ -15,7 +15,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>images/icon_uug.png</normaloff>images/icon_uug.png</iconset>
+    <normaloff>images/icon_uug.svg</normaloff>images/icon_uug.svg</iconset>
   </property>
   <property name="modal">
    <bool>false</bool>
@@ -524,7 +524,7 @@
         <enum>Qt::PlainText</enum>
        </property>
        <property name="pixmap">
-        <pixmap>images/icon_uug.png</pixmap>
+        <pixmap>images/icon_uug.svg</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -620,7 +620,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap>images/envirosolutions.png</pixmap>
+        <pixmap>images/logo_es.svg</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>

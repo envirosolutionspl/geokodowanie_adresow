@@ -95,7 +95,7 @@ class Ui_GeokodowanieAdresowDialogBase(object):
         self.img_main = QtWidgets.QLabel(GeokodowanieAdresowDialogBase)
         self.img_main.setGeometry(QtCore.QRect(400, 150, 121, 111))
         self.img_main.setText("")
-        self.img_main.setPixmap(QtGui.QPixmap("images/icon_uug.png"))
+        self.img_main.setPixmap(QtGui.QPixmap("images/icon_uug.svg"))
         self.img_main.setScaledContents(True)
         self.img_main.setObjectName("img_main")
         self.cbxFirstRow = QtWidgets.QCheckBox(GeokodowanieAdresowDialogBase)
