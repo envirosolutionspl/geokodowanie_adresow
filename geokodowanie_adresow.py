@@ -41,7 +41,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
-plugin_version = '1.2.1'
+plugin_version = '1.2.2'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 
@@ -195,7 +195,7 @@ class GeokodowanieAdresow:
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.dlg.qfwOutputFile.setFilter(filter="Pliki tekstowe (*.txt)")
         self.dlg.qfwInputFile.setFilter(filter="Pliki CSV (*.csv)")
-        icon_path = ':/plugins/geokodowanie_adresow/images/icon.png'
+        icon_path = ':/plugins/geokodowanie_adresow/images/icon_uug.svg'
         self.add_action(
             icon_path,
             text=self.tr(plugin_name),
@@ -239,7 +239,7 @@ class GeokodowanieAdresow:
             self.led_symbol_changed()
 
             # Inicjacja grafik
-            self.dlg.img_main.setPixmap(QPixmap(':/plugins/geokodowanie_adresow/images/icon_uug.png'))
+            self.dlg.img_main.setPixmap(QPixmap(':/plugins/geokodowanie_adresow/images/icon_uug.svg'))
 
             # rozmiar okna
             # self.dlg.setFixedSize(self.dlg.size())
