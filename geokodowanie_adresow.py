@@ -28,7 +28,6 @@ from qgis.PyQt.QtWidgets import QAction, QToolBar
 from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes
 from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, QLabel, QDialog, QComboBox
 from PyQt5 import uic
-from .qgis_feed import QgisFeedDialog
 from PyQt5.QtWidgets import QFileDialog
 from qgis.core import QgsSettings
 from . import encoding
@@ -42,6 +41,7 @@ import requests
 from .resources import *
 # Import the code for the dialog
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
+from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
@@ -290,8 +290,9 @@ class GeokodowanieAdresow:
             self.selected_branch = self.qgisfeed_dialog.comboBox.currentText()
             
             #Zapis w QGIS3.ini
-            self.settings.setValue("selected_industry", self.selected_branch)  
-            self.settings.setValue("showDialog", False) 
+            self.settings.setValue("selected_industry", self.selected_branch, QgsSettings.NoSection)  
+            self.settings.setValue("showDialog", False, QgsSettings.NoSection) 
+            self.settings.sync()
               
     def openInputFile(self):
         """
