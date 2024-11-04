@@ -26,7 +26,10 @@ from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QToolBar
 from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes
+from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, QLabel, QDialog, QComboBox
+from PyQt5 import uic
 from PyQt5.QtWidgets import QFileDialog
+from qgis.core import QgsSettings
 from . import encoding
 from os import path
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -38,10 +41,11 @@ import requests
 from .resources import *
 # Import the code for the dialog
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
+from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
-plugin_version = '1.2.2'
+plugin_version = '1.2.3'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 
@@ -57,9 +61,21 @@ class GeokodowanieAdresow:
         :type iface: QgsInterface
         """
 
+        self.settings = QgsSettings() 
+
         if Qgis.QGIS_VERSION_INT >= 31000:
             from .qgis_feed import QgisFeed
-            self.feed = QgisFeed()
+
+            #qgis feed
+            self.selected_industry = self.settings.value("selected_industry", None)
+            show_dialog = self.settings.value("showDialog", True, type=bool)
+            
+            if self.selected_industry is None and show_dialog:
+                self.showBranchSelectionDialog()
+        
+            select_indust_session = self.settings.value('selected_industry')
+            
+            self.feed = QgisFeed(selected_industry=select_indust_session, plugin_name=plugin_name)
             self.feed.initFeed()
 
         # Save reference to the QGIS interface
@@ -267,6 +283,16 @@ class GeokodowanieAdresow:
             if result:
                 pass
 
+    def showBranchSelectionDialog(self):
+        self.qgisfeed_dialog = QgisFeedDialog()
+
+        if self.qgisfeed_dialog.exec_() == QDialog.Accepted:
+            self.selected_branch = self.qgisfeed_dialog.comboBox.currentText()
+            
+            #Zapis w QGIS3.ini
+            self.settings.setValue("selected_industry", self.selected_branch, QgsSettings.NoSection)  
+            self.settings.setValue("showDialog", False, QgsSettings.NoSection) 
+            self.settings.sync()
               
     def openInputFile(self):
         """
