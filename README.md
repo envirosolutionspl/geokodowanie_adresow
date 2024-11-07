@@ -20,7 +20,7 @@ Wtyczka QGIS, która umożliwia lokalizację przestrzenną wybranego punktu adre
 * Proces geokodowania można zatrzymać. W tym celu należy kliknąć na niebieski pasek na dole z prawej strony, wybrać proces "geokodowanie" oraz nacisnąć na pojawiający się krzyżyk.
 
 ### Uwaga:
-* Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.16.16 lub wyższej.
+* Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.22 lub wyższej.
 * Dla niektórych adresów brak jest kodów pocztowych w bazie GUGiK. Należy wtedy użyć 00-000 lub wartości pustej.
 * Jeśli usługa zwróci kilka punktów adresowych, wszystkie zostaną dodane do warstw wynikowych.
 
@@ -44,7 +44,7 @@ The QGIS plugin allows for the spatial location of a selected address point, str
 * The geocoding process can be stopped. To do this, click on the blue bar at the bottom right, select the "geokodowanie" process, and click on the appearing cross.
 
 ### Note:
-* A necessary condition for the proper functioning of the plugin is having QGIS version 3.16.16 or higher.
+* A necessary condition for the proper functioning of the plugin is having QGIS version 3.22 or higher.
 * For some addresses, postal codes are missing in the GUGiK database. In such cases, use 00-000 or leave the value empty.
 * If the service returns multiple address points, all of them will be added to the result layers.
 
