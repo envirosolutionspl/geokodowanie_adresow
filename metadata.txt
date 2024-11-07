@@ -24,6 +24,7 @@ changelog=
   Wersja 1.2.3
   * Aktualizacja QGIS Feed
   * Przeniesienie części UI do folderu UI
+  * Zmiana minimalnej wersji QGIS na 3.22
 #  Wersja 1.2.2
 #  * Aktualizacja ikon wtyczki
 #  Wersja 1.2.1
