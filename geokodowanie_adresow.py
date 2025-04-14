@@ -45,7 +45,7 @@ from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 
 """Wersja wtyczki"""
-plugin_version = '1.2.3'
+plugin_version = '1.2.4'
 plugin_name = 'Geokodowanie adresów UUG GUGiK'
 
 
@@ -262,24 +262,24 @@ class GeokodowanieAdresow:
             self.dlg.setWindowTitle('%s %s' % (plugin_name, plugin_version))
             self.dlg.lbl_pluginVersion.setText('%s %s' % (plugin_name, plugin_version))
 
-        connection = self.check_internet_connection()
-        if not connection:
-            self.iface.messageBar().pushMessage(
-                "Błąd",
-                "Brak połączenia z internetem",
-                level=Qgis.Warning,
-                duration=10
-            )
-            return
-        else:
+        #connection = self.check_internet_connection()
+        #if not connection:
+        #    self.iface.messageBar().pushMessage(
+        #        "Błąd",
+        #        "Brak połączenia z internetem",
+        #        level=Qgis.Warning,
+        #        duration=10
+        #    )
+        #    return
+        #else:
             # show the dialog
-            self.taskManager.cancelAll()
-            self.dlg.show()
+        self.taskManager.cancelAll()
+        self.dlg.show()
             # Run the dialog event loop
-            result = self.dlg.exec_()
+        result = self.dlg.exec_()
             # See if OK was pressed
-            if result:
-                pass
+        if result:
+            pass
 
     def showBranchSelectionDialog(self):
         self.qgisfeed_dialog = QgisFeedDialog()
@@ -462,7 +462,7 @@ class GeokodowanieAdresow:
 
         """
         
-        connection = self.check_internet_connection()
+        """connection = self.check_internet_connection()
         if not connection:
             self.iface.messageBar().pushMessage(
                 "Błąd",
@@ -470,7 +470,7 @@ class GeokodowanieAdresow:
                 level=Qgis.Warning,
                 duration=10
             )
-            return
+            return"""
         # Pobiera indeksy wybranych atrybutów
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
