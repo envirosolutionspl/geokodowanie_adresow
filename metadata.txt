@@ -23,6 +23,7 @@ hasProcessingProvider=no
 changelog=
   Wersja 1.2.4
   * Aktualizacja stopki wtyczki
+  * Tymczasowe usunięcie sprawdzenia łącza internetowego
 #  Wersja 1.2.3
 #  * Aktualizacja QGIS Feed
 #  * Przeniesienie części UI do folderu UI
