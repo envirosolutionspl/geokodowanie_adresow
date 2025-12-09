@@ -27,8 +27,8 @@ from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtWidgets import QAction, QToolBar
 from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes
 from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, QLabel, QDialog, QComboBox
-from PyQt5 import uic
-from PyQt5.QtWidgets import QFileDialog
+from qgis.PyQt import uic
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.core import QgsSettings
 from . import encoding
 from os import path
@@ -43,10 +43,7 @@ from .resources import *
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
-
-"""Wersja wtyczki"""
-plugin_version = '1.2.4'
-plugin_name = 'Geokodowanie adresów UUG GUGiK'
+from . import plugin_name, plugin_version
 
 
 class GeokodowanieAdresow:
@@ -275,7 +272,7 @@ class GeokodowanieAdresow:
         self.taskManager.cancelAll()
         self.dlg.show()
             # Run the dialog event loop
-        result = self.dlg.exec_()
+        result = self.dlg.exec()
             # See if OK was pressed
         if result:
             pass
@@ -283,7 +280,7 @@ class GeokodowanieAdresow:
     def showBranchSelectionDialog(self):
         self.qgisfeed_dialog = QgisFeedDialog()
 
-        if self.qgisfeed_dialog.exec_() == QDialog.Accepted:
+        if self.qgisfeed_dialog.exec() == QDialog.Accepted:
             self.selected_branch = self.qgisfeed_dialog.comboBox.currentText()
             
             #Zapis w QGIS3.ini
