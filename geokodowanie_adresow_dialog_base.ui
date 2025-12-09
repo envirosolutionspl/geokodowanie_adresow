@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>479</width>
-    <height>541</height>
+    <height>581</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -630,7 +630,7 @@
     </spacer>
    </item>
    <item row="11" column="0">
-    <layout class="QVBoxLayout" name="verticalLayout_4">
+    <layout class="QHBoxLayout" name="horizontalLayout_15">
      <item>
       <widget class="QPushButton" name="btnGeokoduj">
        <property name="enabled">
