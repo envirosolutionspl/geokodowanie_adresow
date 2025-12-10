@@ -10,14 +10,12 @@ from qgis.core import (
     QgsGeometry
 )
 
-# Dodanie ścieżki do głównego katalogu wtyczki
 PLUGIN_DIR = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(PLUGIN_DIR)
 
-# Import klas wtyczki
 from geokoder import Geokodowanie
 
-# --- MOCKOWANIE INTERFEJSU QGIS ---
+
 class MockMessageBar:
     def pushMessage(self, title, text, level=None, duration=None):
         print(f"[QGIS MessageBar] {title}: {text}")
@@ -26,7 +24,7 @@ class MockIface:
     def messageBar(self):
         return MockMessageBar()
 
-# ----------------------------------
+# --------------------------- Testy jednostkowe ---------------------------
 
 class TestGeokodowanieLocal(unittest.TestCase):
     
@@ -46,19 +44,16 @@ class TestGeokodowanieLocal(unittest.TestCase):
         self.mock_iface = MockIface()
         self.temp_csv_path = os.path.join(os.path.dirname(__file__), 'temp_test_data.csv')
         
-        # Twoje dane testowe
-        # Format: Miasto, Ulica, Kod, Numer
         self.header = ["Miasto", "Ulica", "Kod", "Numer"]
         self.data_rows = [
             ["Warszawa", "Agrykola", "00-467", "1"],
-            ["Warszawa", "Plac Defilad", "", "1"],       # Brak kodu
+            ["Warszawa", "Plac Defilad", "", "1"],       
             ["Kraków", "Wawel", "31-001", "5"],
             ["Słupno", "Lipowa", "09-472", "4"],
-            ["Słupno", "Lipowa", "05-250", "4"],         # To samo miasto i ulica, inny kod (ważny test!)
-            ["Warszawa", "Szeligowska", "01-320", "32A"] # Numer z literą
+            ["Słupno", "Lipowa", "05-250", "4"],         
+            ["Warszawa", "Szeligowska", "01-320", "32A"] 
         ]
         
-        # Zapisujemy plik CSV
         with open(self.temp_csv_path, mode='w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(self.header)
@@ -78,7 +73,6 @@ class TestGeokodowanieLocal(unittest.TestCase):
         """
         print(f"Rozpoczynam test na pliku lokalnym: {self.temp_csv_path}")
 
-        # 1. Symulacja wczytywania danych (logika z wtyczki)
         delimiter = ','
         
         # Indeksy kolumn w Twoim pliku (liczone od 0):
