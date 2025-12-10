@@ -43,7 +43,7 @@ from .resources import *
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
-from . import plugin_name, plugin_version
+from . import PLUGIN_NAME, PLUGIN_VERSION
 
 
 class GeokodowanieAdresow:
@@ -70,7 +70,7 @@ class GeokodowanieAdresow:
 
             select_indust_session = self.settings.value('selected_industry')
 
-            self.feed = QgisFeed(selected_industry=select_indust_session, plugin_name=plugin_name)
+            self.feed = QgisFeed(selected_industry=select_indust_session, plugin_name=PLUGIN_NAME)
             self.feed.initFeed()
 
         # Save reference to the QGIS interface
@@ -209,7 +209,7 @@ class GeokodowanieAdresow:
         icon_path = os.path.join(self.plugin_dir, 'images', 'icon_uug.svg')
         self.add_action(
             icon_path,
-            text=self.tr(plugin_name),
+            text=self.tr(PLUGIN_NAME),
             callback=self.run,
             parent=self.iface.mainWindow())
 
@@ -255,8 +255,8 @@ class GeokodowanieAdresow:
             # self.dlg.setFixedSize(self.dlg.size())
 
             # informacje o wersji
-            self.dlg.setWindowTitle('%s %s' % (plugin_name, plugin_version))
-            self.dlg.lbl_pluginVersion.setText('%s %s' % (plugin_name, plugin_version))
+            self.dlg.setWindowTitle('%s %s' % (PLUGIN_NAME, PLUGIN_VERSION))
+            self.dlg.lbl_pluginVersion.setText('%s %s' % (PLUGIN_NAME, PLUGIN_VERSION))
 
         #connection = self.check_internet_connection()
         #if not connection:

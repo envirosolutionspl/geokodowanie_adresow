@@ -28,17 +28,15 @@ import configparser
 
 
 """Wersja wtyczki"""
-plugin_name = ''
-plugin_version = ''
+PLUGIN_NAME = ''
+PLUGIN_VERSION = ''
 
-config = configparser.ConfigParser()
-try:
-    with open(os.path.join(os.path.dirname(__file__), 'metadata.txt'), 'r', encoding='utf-8') as f:
-        config.read_file(f)
-    plugin_name = config.get('general', 'name')
-    plugin_version = config.get('general', 'version')
-except Exception:
-    pass
+with open(os.path.join(os.path.dirname(__file__), 'metadata.txt'), 'r') as pluginMetadataFile:
+    for line in pluginMetadataFile:
+        if line.startswith('name='):
+            PLUGIN_NAME = line.split('=')[1].strip()
+        elif line.startswith('version='):
+            PLUGIN_VERSION = line.split('=')[1].strip()
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
