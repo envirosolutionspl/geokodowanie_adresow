@@ -23,6 +23,19 @@
  This script initializes the plugin, making it known to QGIS.
 """
 
+import os
+
+
+"""Wersja wtyczki"""
+PLUGIN_NAME = ''
+PLUGIN_VERSION = ''
+
+with open(os.path.join(os.path.dirname(__file__), 'metadata.txt'), 'r') as pluginMetadataFile:
+    for line in pluginMetadataFile:
+        if line.startswith('name='):
+            PLUGIN_NAME = line.split('=')[1].strip()
+        elif line.startswith('version='):
+            PLUGIN_VERSION = line.split('=')[1].strip()
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
@@ -31,6 +44,6 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :param iface: A QGIS interface instance.
     :type iface: QgsInterface
     """
-    #
+    #    
     from .geokodowanie_adresow import GeokodowanieAdresow
     return GeokodowanieAdresow(iface)
