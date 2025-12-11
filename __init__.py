@@ -24,7 +24,6 @@
 """
 
 import os
-import configparser
 
 
 """Wersja wtyczki"""
