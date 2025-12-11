@@ -26,6 +26,9 @@ Wtyczka QGIS, która umożliwia lokalizację przestrzenną wybranego punktu adre
 * Dla niektórych adresów brak jest kodów pocztowych w bazie GUGiK. Należy wtedy użyć 00-000 lub wartości pustej.
 * Jeśli usługa zwróci kilka punktów adresowych, wszystkie zostaną dodane do warstw wynikowych.
 
+### Dane testowe do geokodowania
+Przykładowe dane do testowania znajdują się pod linkiem https://downloads.envirosolutions.pl/sample-data.csv [dostęp 2025-12-10]
+
 ## EN
 
 The QGIS plugin allows for the spatial location of a selected address point, street, or locality. Data retrieval is carried out through the UUG service provided by the Head Office of Geodesy and Cartography. It supports CSV files. The file may (but does not have to) contain headers.
@@ -50,11 +53,5 @@ The QGIS plugin allows for the spatial location of a selected address point, str
 * For some addresses, postal codes are missing in the GUGiK database. In such cases, use 00-000 or leave the value empty.
 * If the service returns multiple address points, all of them will be added to the result layers.
 
-#### Sample geocoding input file/  Przykładowy plik do geokodowania:
-```
-miasto,ulica,kod,numer
-Warszawa, Szeligowska, 01-320, 32A
-Marki, Andersa,, 1
-Słupno, Lipowa, 09-472, 4
-Słupno, Lipowa, 05-250, 4
-```
+### Sample geocoding input file
+Sample data for geocoding can be found at the link https://downloads.envirosolutions.pl/sample-data.csv [access 2025-12-10]
