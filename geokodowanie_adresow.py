@@ -24,11 +24,10 @@
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QToolBar
-from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, \
-    QgsWkbTypes
 from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, \
-    QLabel, QDialog, QComboBox
+                                QLabel, QDialog, QComboBox
+from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, \
+                    QgsWkbTypes
 from PyQt5 import uic
 from PyQt5.QtWidgets import QFileDialog
 from qgis.core import QgsSettings
@@ -42,6 +41,7 @@ from .resources import *
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
+from .constants import REP, GUGIK, PARAMS
 
 """Wersja wtyczki"""
 plugin_version = '1.2.4'
@@ -58,7 +58,6 @@ class GeokodowanieAdresow:
             który umożliwia manipulację aplikacją QGIS w czasie wykonywania.
         :type iface: QgsInterface
         """
-
         self.settings = QgsSettings() 
 
         if Qgis.QGIS_VERSION_INT >= 31000:
@@ -93,6 +92,7 @@ class GeokodowanieAdresow:
         self.menu = self.tr(u'&EnviroSolutions')
         self.toolbar = self.iface.mainWindow().findChild(QToolBar, 
             'EnviroSolutions')
+
         if not self.toolbar:
             self.toolbar = self.iface.addToolBar(u'EnviroSolutions')
             self.toolbar.setObjectName(u'EnviroSolutions')
@@ -113,7 +113,6 @@ class GeokodowanieAdresow:
         :returns: Przetłumaczona wersja wiadomości.
         :rtype: QString
         """
-
         return QCoreApplication.translate('GeokodowanieAdresow', message)
 
     def addAction(
@@ -169,7 +168,6 @@ class GeokodowanieAdresow:
             dodana do listy self.actions.
         :rtype: QAction
         """
-
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
@@ -177,20 +175,16 @@ class GeokodowanieAdresow:
 
         if status_tip is not None:
             action.setStatusTip(status_tip)
-
         if whats_this is not None:
             action.setWhatsThis(whats_this)
-
         if add_to_toolbar:
             self.toolbar.addAction(action)
-
         if add_to_menu:
             self.iface.addPluginToMenu(
                 self.menu,
                 action)
 
         self.actions.append(action)
-
         return action
    
     def initGui(self):
@@ -207,23 +201,20 @@ class GeokodowanieAdresow:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.first_start = True
-  
+
     def unload(self):
         """Usuwa elementy menu i ikony paska narzędzi z interfejsu QGIS."""
-        
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&EnviroSolutions'),
                 action)
             self.toolbar.removeAction(action)
 
-            
     def run(self):
         """
         Metoda run, która jest wywoływana, gdy użytkownik kliknie 
         na ikonę w pasku narzędzi.
         """
-        
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
         if self.first_start == True:
             self.first_start = False
@@ -236,29 +227,33 @@ class GeokodowanieAdresow:
             self.dlg.cbxDelimiter.activated.connect(self.readHeader)
             self.isInputFile = False
             self.isOutputFile = False
-
             self.dlg.cbxEncoding.addItems(encoding.encodings)
             utf8Id = self.dlg.cbxEncoding.findText('utf_8')
             self.dlg.cbxEncoding.setCurrentIndex(utf8Id)
             self.dlg.cbxEncoding.currentIndexChanged.connect(self.readHeader)
-
             self.ledSymbolChanged()
-            self.dlg.img_main.setPixmap(QPixmap(os.path.join(self.plugin_dir, 
-                'images', 'icon_uug.svg'
-                )))
+            self.dlg.img_main.setPixmap(
+                QPixmap(os.path.join(
+                    self.plugin_dir,
+                    'images',
+                    'icon_uug.svg'
+                ))
+            )
             self.dlg.setWindowTitle('%s %s' % (plugin_name, plugin_version))
             self.dlg.lbl_pluginVersion.setText('%s %s' % (plugin_name, 
                 plugin_version)
-                )
+            )
         connection = self.checkInternetConnection()
         if not connection:
             self.iface.messageBar().pushMessage(
                 "Błąd",
-                "Brak połączenia z internetem",
+                "Brak połączenia z internetem lub usługa "
+                "GUGiK jest niedostępna.",
                 level=Qgis.Warning,
                 duration=10
                 )
             return
+
         self.taskManager.cancelAll()
         self.dlg.show()
         result = self.dlg.exec_()
@@ -272,10 +267,10 @@ class GeokodowanieAdresow:
         if self.qgisfeed_dialog.exec_() == QDialog.Accepted:
             self.selected_branch = self.qgisfeed_dialog.comboBox.currentText()
             self.settings.setValue("selected_industry", self.selected_branch, 
-                QgsSettings.NoSection)  
-            self.settings.setValue("showDialog", False, QgsSettings.NoSection) 
+                QgsSettings.NoSection)
+            self.settings.setValue("showDialog", False, QgsSettings.NoSection)
             self.settings.sync()
-              
+
     def openInputFile(self):
         """
         Otwiera okno dialogowe do wyboru pliku CSV.
@@ -288,7 +283,7 @@ class GeokodowanieAdresow:
             if self.isInputFile and self.isOutputFile:
                 self.dlg.btnGeokoduj.setEnabled(True)
             self.readHeader()
-       
+
     def saveOutputFile(self):
         """
         Otwiera okno dialogowe do zapisu pliku tekstowego.
@@ -301,7 +296,6 @@ class GeokodowanieAdresow:
             if self.isInputFile and self.isOutputFile:
                 self.dlg.btnGeokoduj.setEnabled(True)
 
-                
     def readHeader(self):
         """
         Czyści ComboBoxy w interfejsie użytkownika.
@@ -334,13 +328,10 @@ class GeokodowanieAdresow:
                         duration=5
                     )
                     return False
-                
-                # Rozdziela nagłówki za pomocą separatora i usuwa białe znaki
-                elementyNaglowkow = naglowki.split(self.delimeter)
-                elementyNaglowkow = [x.strip() for x in elementyNaglowkow]  
-                elementyNaglowkow.insert(0, "")
 
-                # Dodaje elementy nagłówka do odpowiednich ComboBoxów
+                elementyNaglowkow = naglowki.split(self.delimeter)
+                elementyNaglowkow = [x.strip() for x in elementyNaglowkow]
+                elementyNaglowkow.insert(0, "")
                 self.dlg.cbxMiejscowosc.addItems(elementyNaglowkow)
                 self.dlg.cbxUlica.addItems(elementyNaglowkow)
                 self.dlg.cbxNumer.addItems(elementyNaglowkow)
@@ -355,7 +346,6 @@ class GeokodowanieAdresow:
             idKod
         ):
         """Sprawdzenie poprawności CSV"""
-        
         for rekord in rekordy:
             wartosci = rekord.strip().split(self.delimeter)
             try:
@@ -412,20 +402,19 @@ class GeokodowanieAdresow:
         warstwaPoly = QgsVectorLayer(
             "Polygon?crs=EPSG:2180" + fields
             , "zgeokodowane place", "memory")
-        
+
         return warstwaPoint, warstwaLine, warstwaPoly
 
 
     def parseCsv(self):
         """
-        Parsuje plik CSV, przetwarza jego zawartość i inicjuje proces geokodowania.
+        Parsuje plik CSV, przetwarza jego zawartość i inicjuje proces 
+        geokodowania.
 
         Sprawdza, czy wybrane atrybuty są poprawnie wybrane, czy plik CSV
         jest poprawny, a następnie przetwarza rekordy, tworzy listy wartości
         dla poszczególnych atrybutów i inicjuje proces geokodowania.
-
         """
-
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
         idNumer = self.dlg.cbxNumer.currentIndex()
@@ -446,55 +435,64 @@ class GeokodowanieAdresow:
                 duration =10
             )
         else:
-            # Inicjalizuje listy dla poszczególnych atrybutów
             miejscowosci = []
             ulicy = []
             numery = []
             kody = []
 
-            # Otwiera plik CSV i przetwarza jego zawartość
-            with open(self.inputPlik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
+            with open(
+                self.inputPlik, 'r', \
+                encoding=self.dlg.cbxEncoding.currentText()
+                ) as plik:
                 
                 try:
-                    zawartosc = plik.readlines()  # całość jako lista tekstowych linijek
+                    zawartosc = plik.readlines()
                 except UnicodeDecodeError:
                     return False
 
-                # Pobiera nagłówek i dzieli go na listę wartości
                 self.naglowek = zawartosc[0]
-                naglowki = self.naglowek.strip().split(self.delimeter)  # lista wartosci w ramach naglowka
+                naglowki = self.naglowek.strip().split(self.delimeter)
 
-                # Sprawdza, czy pierwszy wiersz to nagłówek
                 if self.dlg.cbxFirstRow.isChecked():
                     self.rekordy = zawartosc[1:]
-                    self.warstwaPoint, self.warstwaLine, self.warstwaPoly= self.createEmptyLayer(
+                    self.warstwaPoint, self.warstwaLine, self.warstwaPoly = \
+                    self.createEmptyLayer(
                         headings=naglowki, 
                         hasHeadings=True
                     )
                 else:
                     self.rekordy = zawartosc[:]
-                    self.rekordy[0] = self.rekordy[0][1:]  # usuniecie pierwszego bitu zwiazanego z poczatkiem pliku
-                    self.warstwaPoint, self.warstwaLine, self.warstwaPoly = self.createEmptyLayer(
+                    self.rekordy[0] = self.rekordy[0][1:]
+                    self.warstwaPoint, self.warstwaLine, self.warstwaPoly = \
+                    self.createEmptyLayer(
                         headings=naglowki, 
                         hasHeadings=False
                     )
-
-                # sprawdzenie czy plik CSV jest poprawny
-                if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer, idKod):
+                if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, 
+                    idNumer, idKod):
                     return False
                 
-                # Przetwarza rekordy i tworzy listy wartości dla poszczególnych atrybutów
                 for rekord in self.rekordy:
-                    
                     try:
                         wartosci = rekord.strip().split(self.delimeter)
-                        miejscowosci.append(wartosci[idMiejscowosc - 1] if idMiejscowosc else "")
-                        ulicy.append(self.dealWithAbbreviations(wartosci[idUlica - 1]) if idUlica else "")
-                        numery.append(self.korektaFormatu(wartosci[idNumer - 1].upper()) if idNumer else "")
-                        kody.append(self.korektaFormatu(wartosci[idKod - 1]) if idKod else "")
+                        miejscowosci.append(
+                            wartosci[idMiejscowosc - 1] 
+                            if idMiejscowosc else ""
+                        )
+                        ulicy.append(
+                            self.dealWithAbbreviations(wartosci[idUlica - 1])
+                            if idUlica else ""
+                        )
+                        numery.append(
+                            self.korektaFormatu(wartosci[idNumer - 1].upper())
+                            if idNumer else ""
+                        )
+                        kody.append(
+                            self.korektaFormatu(wartosci[idKod - 1])
+                            if idKod else ""
+                        )
 
                     except Exception as e:
-                        # Informuje o błędzie podczas przetwarzania rekordu
                         self.iface.messageBar().pushMessage(
                             "Błąd przetwarzania rekordu", 
                             str(e), 
@@ -503,7 +501,7 @@ class GeokodowanieAdresow:
                         )
                         continue
 
-                # Tworzy obiekt zadania geokodowania i dodaje je do menedżera zadań
+                # Tworzy obiekt geokodowania do menedżera zadań.
                 task = Geokodowanie(
                     rekordy = self.rekordy, 
                     miejscowosci = miejscowosci, 
@@ -513,10 +511,8 @@ class GeokodowanieAdresow:
                     delimeter = self.delimeter, 
                     iface = self.iface,
                 )
-
                 self.taskManager.addTask(task)
-                self.dlg.btnGeokoduj.setEnabled(False)  
-                
+                self.dlg.btnGeokoduj.setEnabled(False)
             task.finishedProcessing.connect(self.geokodowanieSukces)
     
 
@@ -528,10 +524,7 @@ class GeokodowanieAdresow:
         Jeśli tak, usuwa go.
         Zwraca skorygowany numer.
         """
-        
-        # Sprawdza, czy cudzysłów występuje w numerze
         if '"' in numer:
-            # Usuwa cudzysłów
             numer = numer.replace('"', '')
         return numer
 
@@ -546,20 +539,12 @@ class GeokodowanieAdresow:
         Zamienia polskie cudzysłowy na standardowe cudzysłowy.
         Zwraca przekształcony tekst.
         """
-        
-        # Słownik przekształceń skrótów na pełne nazwy
-        rep = {"al.": "aleje", "Al.": "Aleje", "Pl.": "Plac", "pl.": "plac", "ul.":"", "Ul.":""}
-        # Tworzy słownik przekształceń ze znakami ucieczki dla wyrażeń regularnych
-
+        rep = REP
         rep = dict((re.escape(k), v) for k, v in rep.items())
-        # Tworzy wyrażenie regularne z przekształconych skrótów
         self.pattern = re.compile("|".join(rep.keys()))
-        # Zamienia skróty na pełne nazwy w tekście
         text = self.pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
-        # Zamienia polskie cudzysłowy na standardowe cudzysłowy
         if "„" in text or "”" in text:
             text = text.replace("„", '"').replace("”", '"')
-        # Zwraca przekształcony tekst
         return text    
 
       
@@ -573,7 +558,6 @@ class GeokodowanieAdresow:
         self.delimeter = self.dlg.cbxDelimiter.currentText()
         if self.delimeter == '':
             self.delimeter = ','
-
         if self.delimeter == "Spacja":
             self.delimeter = ' '
 
@@ -593,8 +577,8 @@ class GeokodowanieAdresow:
                 stop
         ):
         """
-        Funkcja przetwarza wyniki geokodowania, dodając je do odpowiednich warstw w QGIS,
-        aktualizując te warstwy oraz wyświetlając odpowiednie komunikaty.
+        Funkcja przetwarza wyniki geokodowania, dodając je do odpowiednich warstw
+        w QGIS, aktualizując te warstwy oraz wyświetlając odpowiednie komunikaty.
 
         Parametry:
             featuresPoint (list): Lista obiektów geometrii punktowej.
@@ -603,54 +587,47 @@ class GeokodowanieAdresow:
             bledne (list): Lista błędnych adresów, które nie zostały zgeokodowane.
             stop (bool): Flaga wskazująca, czy proces geokodowania został zatrzymany.
         """
-        
-        # Zgrupowanie warstw do jednej listy
         warstwy = [self.warstwaPoint, self.warstwaLine, self.warstwaPoly]
-        
-        # Włączenie przycisku "Geokoduj"
         self.dlg.btnGeokoduj.setEnabled(True)
-        
-        # Dodanie obiektów do odpowiednich warstw danych
         self.warstwaPoint.dataProvider().addFeatures(featuresPoint)
         self.warstwaLine.dataProvider().addFeatures(featuresLine)
         self.warstwaPoly.dataProvider().addFeatures(featuresPoly)
         
-        # Aktualizacja zakresu i dodanie warstw do projektu
         for warstwa in warstwy:
             warstwa.updateExtents()
             if warstwa.featureCount() > 0:
                 self.project.addMapLayer(warstwa)
         
-        # Obliczenie liczby zgeokodowanych rekordów i całkowitej liczby rekordów
-        iloscZgeokodowanych = len(featuresLine) + len(featuresPoint) + len(featuresPoly)
+        iloscZgeokodowanych = (
+            len(featuresLine) 
+            + len(featuresPoint) 
+            + len(featuresPoly)
+        )
         iloscRekordow = len(self.rekordy)
         
-        # Wyświetlenie komunikatu, jeśli proces geokodowania został zatrzymany
         if stop:
             self.iface.messageBar().pushMessage(
                 "Proces geokodowania został zatrzymany:",
-                "Zgeokodowano %i/%i adresów. Błędnie zgeokodowane adresy zostały zapisane w pliku %s" % (
-                    iloscZgeokodowanych,
-                    iloscRekordow,
-                    self.outputPlik
-                ), 
+                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
+                "Błędnie zgeokodowane adresy zostały zapisane"
+                f"w pliku {self.outputPlik}", 
                 level=Qgis.Info,
                 duration=5
             )
-
         elif bledne or iloscZgeokodowanych == 0:
             iloscBledow = len(bledne)
-            bledne.insert(0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n")
+            bledne.insert(
+                0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n"
+            )
             self.saveErrors(bledne)
             
             self.iface.messageBar().pushMessage(
                 "Wynik geokodowania:",
-                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow} adresów. "
-                f"Pozostałe zostały zapisane w pliku {self.outputPlik}", 
+                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
+                f" Pozostałe zostały zapisane w pliku {self.outputPlik}", 
                 level=Qgis.Info,
                 duration=5
             )
-        
         elif iloscZgeokodowanych > iloscRekordow:
             self.iface.messageBar().pushMessage(
                 "Wynik geokodowania:",
@@ -659,7 +636,6 @@ class GeokodowanieAdresow:
                 level=Qgis.Success,
                 duration=5
             )
-        
         elif not bledne:
             self.iface.messageBar().pushMessage(
                 "Wynik geokodowania:",
@@ -672,13 +648,9 @@ class GeokodowanieAdresow:
       
     def checkInternetConnection(self):
         try:
-            session = requests.Session()
-            with session.get(url='https://www.envirosolutions.pl', 
-                verify=False) as resp:
-                if resp.status_code != 200:
-                    return False
-                return True
-        except requests.exceptions.ConnectionError:
+            resp = requests.get(
+                GUGIK, verify=False, timeout=5
+            )
+            return resp.status_code == 200
+        except Exception:
             return False
-        finally:
-            session.close()
