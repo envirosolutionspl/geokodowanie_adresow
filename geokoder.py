@@ -7,12 +7,12 @@ from qgis.core import (
     QgsProject,
     QgsGeometry,
     QgsFeature,
-    QgsTask,
     QgsMessageLog,
+    QgsTask,
     QgsWkbTypes
     )
-from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import QObject, pyqtSignal
+from .utils import QgsTools
 
 class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list, list, list, bool)
@@ -20,6 +20,7 @@ class Geokodowanie(QgsTask):
     def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
+        self.qgs_tools = QgsTools(self.iface)
         self.rekordy = rekordy
         self.miejscowosci = miejscowosci
         self.ulicy = ulicy
@@ -33,13 +34,7 @@ class Geokodowanie(QgsTask):
         self.bledne = []
         self.service = "http://services.gugik.gov.pl/uug/?"  # Adres usługi geokodowania GUGiK
 
-        
-        self.iface.messageBar().pushMessage(
-            "Info: ", 
-            "Zaczął się proces geokodowania.", 
-            level=Qgis.Info,
-            duration=10
-        )
+        self.qgs_tools.pushMessage("Zaczął się proces geokodowania.")
 
     def run(self):
         """
@@ -52,6 +47,7 @@ class Geokodowanie(QgsTask):
 
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
+
         QgsMessageLog.logMessage("Zaczął się proces geokodowania.")
 
         for i, rekord in enumerate(self.rekordy):
@@ -170,11 +166,10 @@ class Geokodowanie(QgsTask):
 
     def finished(self, result):
         if not result and self.stop != True:
-            self.iface.messageBar().pushMessage(
-              "Błąd","Geokodowanie  nie powiodło się.",
-              level=Qgis.Warning,
-              duration=10
+            msg = (
+                f"Geokodowanie  nie powiodło się."
             )
+            self.qgs_tools.pushWarning(msg)
             self.finishedProcessing.emit(
                 self.featuresPoint, 
                 self.featuresLine, 

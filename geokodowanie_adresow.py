@@ -44,6 +44,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 from . import PLUGIN_NAME, PLUGIN_VERSION
+from .utils import QgsTools
 
 
 class GeokodowanieAdresow:
@@ -88,7 +89,7 @@ class GeokodowanieAdresow:
             self.translator = QTranslator()
             self.translator.load(locale_path)
             QCoreApplication.installTranslator(self.translator)
-
+        self.qgs_tools = QgsTools(self.iface)
         # Declare instance attributes
         self.actions = []
         # self.geokodowanie = Geokodowanie(self.iface)
@@ -355,14 +356,11 @@ class GeokodowanieAdresow:
                 try:
                     naglowki = plik.readline()
                 except UnicodeDecodeError:
-                    # Wyświetla komunikat o błędzie kodowania, jeśli wystąpi błąd podczas odczytu pliku
-                    self.iface.messageBar().pushMessage(
-                        "Błąd kodowania:",
-                        "Nie udało się zastosować wybranego kodowania do pliku z adresami. Spróbuj innego kodowania.",
-                        level=Qgis.Warning, 
-                        duration=5
+                    msg = (
+                        "Błąd kodowania: Nie udało się zastosować wybranego"
+                        " kodowania do pliku z adresami. Spróbuj innego kodowania."
                     )
-                    # Przerywa działanie funkcji
+                    self.qgs_tools.pushWarning(msg)
                     return False
                 
                 # Rozdziela elementy nagłówka za pomocą określonego separatora i usuwa białe znaki z każdego elementu
@@ -400,14 +398,13 @@ class GeokodowanieAdresow:
                     wartosci[idKod - 1]
 
             except IndexError:
-                self.iface.messageBar().pushMessage(
-                    "Błąd wczytywania pliku:",
-                    "błąd w wierszu nr %d: %s" % (rekordy.index(rekord), rekord),
-                    level=Qgis.Critical, 
-                    duration=5
+                msg = (
+                    "Błąd wczytywania pliku: błąd w wierszu nr"
+                    f"{rekordy.index(rekord)}: {rekord}"
                 )
-                return False  # wystąpiły błędy
-        return True  # poprawnie wczytano wszystkie wiersze
+                self.qgs_tools.pushCritical(msg)
+                return False
+        return True
 
       
     def createEmptyLayer(
@@ -460,13 +457,11 @@ class GeokodowanieAdresow:
         
         """connection = self.check_internet_connection()
         if not connection:
-            self.iface.messageBar().pushMessage(
-                "Błąd",
-                "Brak połączenia z internetem",
-                level=Qgis.Warning,
-                duration=10
-            )
-            return"""
+            msg = "Brak połączenia z internetem"
+            self.tools.pushWarning(msg)
+            return
+        """
+
         # Pobiera indeksy wybranych atrybutów
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
@@ -476,20 +471,15 @@ class GeokodowanieAdresow:
         # Sprawdza, czy co najmniej jeden atrybut jest wybrany
         if not idMiejscowosc and not idUlica and not idNumer and not idKod:
             # Informuje użytkownika, że nie wybrano żadnych atrybutów
-            self.iface.messageBar().pushMessage(
-                "Informacja: ", 
-                "Nie wybrano żadnych atrybutów.", 
-                Qgis.Info, 
-                duration =10
-            )
+            msg = "Nie wybrano żadnych atrybutów."
+            self.qgs_tools.pushWarning(msg)
+            return
+            msg = f"Nie wybrano żadnych atrybutów."
+            self.qgs_tools.pushMessage(msg)
         # Sprawdza, czy wybrano miejscowość, jeśli nie, informuje użytkownika
         elif not idMiejscowosc:
-            self.iface.messageBar().pushMessage(
-                "Informacja: ", 
-                "Nie wybrano miejscowości.", 
-                Qgis.Info, 
-                duration =10
-            )
+            msg = f"Nie wybrano miejscowości."
+            self.qgs_tools.pushMessage(msg) 
         else:
             # Inicjalizuje listy dla poszczególnych atrybutów
             miejscowosci = []
@@ -540,12 +530,8 @@ class GeokodowanieAdresow:
 
                     except Exception as e:
                         # Informuje o błędzie podczas przetwarzania rekordu
-                        self.iface.messageBar().pushMessage(
-                            "Błąd przetwarzania rekordu", 
-                            str(e), 
-                            level=Qgis.Critical, 
-                            duration=3
-                        )
+                        msg  = f"Błąd przetwarzania rekordu {str(e)}"
+                        self.qgs_tools.pushCritical(msg)
                         continue
 
                 # Tworzy obiekt zadania geokodowania i dodaje je do menedżera zadań
@@ -682,56 +668,40 @@ class GeokodowanieAdresow:
         
         # Wyświetlenie komunikatu, jeśli proces geokodowania został zatrzymany
         if stop:
-            self.iface.messageBar().pushMessage(
-                "Proces geokodowania został zatrzymany:",
-                "Zgeokodowano %i/%i adresów. Błędnie zgeokodowane adresy zostały zapisane w pliku %s" % (
-                    iloscZgeokodowanych,
-                    iloscRekordow,
-                    self.outputPlik
-                ), 
-                level=Qgis.Info,
-                duration=5
+            msg = (
+                "Proces geokodowania został zatrzymany: "
+                f"Zdekodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
+                f" Błędnie zgeokodowane adresy zostały zapisane w pliku {self.outputPlik}."
             )
-        
+            self.qgs_tools.pushInfo(msg)        
         # Wyświetlenie komunikatu, jeśli są błędne adresy lub żaden adres nie został zgeokodowany
         elif bledne or iloscZgeokodowanych == 0:
             iloscBledow = len(bledne)
             bledne.insert(0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n")
             self.saveErrors(bledne)
-            
-            self.iface.messageBar().pushMessage(
-                "Wynik geokodowania:",
-                "Zgeokodowano %i/%i adresów. Pozostałe zostały zapisane w pliku %s" % (
-                    iloscZgeokodowanych,
-                    iloscRekordow,
-                    self.outputPlik
-                ), 
-                level=Qgis.Info,
-                duration=5
+            msg = (
+                "Wynik geokodowania: "
+                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow}. "
+                f"Pozostałe zostały zapisane w pliku {self.outputPlik}."
             )
+            self.qgs_tools.pushInfo(msg)
         
         # Wyświetlenie komunikatu, jeśli liczba zgeokodowanych adresów jest większa niż liczba rekordów
         elif iloscZgeokodowanych > iloscRekordow:
-            self.iface.messageBar().pushMessage(
-                "Wynik geokodowania:",
-                "Zgeokodowano %i/%i adresów. Dla niektórych adresów usługa geokodowania zwróciła kilka wartości." % (
-                    iloscZgeokodowanych,
-                    iloscRekordow
-                ),
-                level=Qgis.Success,
-                duration=5
+            msg = (
+                "Wynik geokodowania: "
+                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow}. "
+                f"Dla niektórych adresów usługa geokodowania zwróciła kilka wartości."
             )
+            self.qgs_tools.pushSuccess(msg)
         
         # Wyświetlenie komunikatu, jeśli wszystkie adresy zostały poprawnie zgeokodowane
         elif not bledne:
-            self.iface.messageBar().pushMessage(
-                "Wynik geokodowania:",
-                "Zgeokodowano wszystkie %i adresów" % (
-                    iloscZgeokodowanych
-                ),
-                level=Qgis.Success,
-                duration=5
+            msg = (
+                "Wynik geokodowania:"
+                f"Zgeokodowano wszystkie {iloscZgeokodowanych} adresów"
             )
+            self.qgs_tools.pushSuccess(msg)
             
             
     def check_internet_connection(self):
