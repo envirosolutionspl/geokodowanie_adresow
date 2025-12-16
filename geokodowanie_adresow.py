@@ -24,12 +24,11 @@
 
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
 from qgis.PyQt.QtGui import QIcon, QPixmap
-from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, \
-                                QLabel, QDialog, QComboBox
-from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, \
-                    QgsWkbTypes
-from PyQt5 import uic
-from PyQt5.QtWidgets import QFileDialog
+from qgis.PyQt.QtWidgets import QAction, QToolBar
+from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes
+from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, QLabel, QDialog, QComboBox
+from qgis.PyQt import uic
+from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.core import QgsSettings
 from . import encoding
 from os import path
@@ -41,11 +40,10 @@ from .resources import *
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
-from .constants import REP, GUGIK, PARAMS
 
-"""Wersja wtyczki"""
-plugin_version = '1.2.4'
-plugin_name = 'Geokodowanie adresów UUG GUGiK'
+from .constants import REP, GUGIK, PARAMS
+from . import PLUGIN_NAME, PLUGIN_VERSION
+
 
 
 class GeokodowanieAdresow:
@@ -71,8 +69,7 @@ class GeokodowanieAdresow:
 
             select_indust_session = self.settings.value('selected_industry')
 
-            self.feed = QgisFeed(selected_industry=select_indust_session, 
-                plugin_name=plugin_name)
+            self.feed = QgisFeed(selected_industry=select_indust_session, plugin_name=PLUGIN_NAME)
             self.feed.initFeed()
 
         self.iface = iface
@@ -197,7 +194,7 @@ class GeokodowanieAdresow:
         icon_path = os.path.join(self.plugin_dir, 'images', 'icon_uug.svg')
         self.addAction(
             icon_path,
-            text=self.tr(plugin_name),
+            text=self.tr(PLUGIN_NAME),
             callback=self.run,
             parent=self.iface.mainWindow())
         self.first_start = True
@@ -239,10 +236,9 @@ class GeokodowanieAdresow:
                     'icon_uug.svg'
                 ))
             )
-            self.dlg.setWindowTitle('%s %s' % (plugin_name, plugin_version))
-            self.dlg.lbl_pluginVersion.setText('%s %s' % (plugin_name, 
-                plugin_version)
-            )
+            self.dlg.setWindowTitle('%s %s' % (PLUGIN_NAME, PLUGIN_VERSION))
+            self.dlg.lbl_pluginVersion.setText('%s %s' % (PLUGIN_NAME, PLUGIN_VERSION))
+        
         connection = self.checkInternetConnection()
         if not connection:
             self.iface.messageBar().pushMessage(
@@ -264,7 +260,7 @@ class GeokodowanieAdresow:
     def showBranchSelectionDialog(self):
         self.qgisfeed_dialog = QgisFeedDialog()
 
-        if self.qgisfeed_dialog.exec_() == QDialog.Accepted:
+        if self.qgisfeed_dialog.exec() == QDialog.Accepted:
             self.selected_branch = self.qgisfeed_dialog.comboBox.currentText()
             self.settings.setValue("selected_industry", self.selected_branch, 
                 QgsSettings.NoSection)

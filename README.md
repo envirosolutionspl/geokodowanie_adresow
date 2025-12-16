@@ -19,10 +19,15 @@ Wtyczka QGIS, która umożliwia lokalizację przestrzenną wybranego punktu adre
 * W zależności od liczby punktów do geokodowania, proces może zająć pewien czas. W takim przypadku wtyczkę można zminimalizować, naciskając przycisk "Zamknij". Proces będzie kontynuowany w tle.
 * Proces geokodowania można zatrzymać. W tym celu należy kliknąć na niebieski pasek na dole z prawej strony, wybrać proces "geokodowanie" oraz nacisnąć na pojawiający się krzyżyk.
 
+![geokodowanie_gif_720](https://github.com/user-attachments/assets/b0ca89c2-faab-43e6-bec8-26197de820ab)
+
 ### Uwaga:
 * Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.28.1 lub wyższej.
 * Dla niektórych adresów brak jest kodów pocztowych w bazie GUGiK. Należy wtedy użyć 00-000 lub wartości pustej.
 * Jeśli usługa zwróci kilka punktów adresowych, wszystkie zostaną dodane do warstw wynikowych.
+
+### Dane testowe do geokodowania
+Przykładowe dane do testowania znajdują się pod linkiem https://downloads.envirosolutions.pl/sample-data.csv [dostęp 2025-12-10]
 
 ## EN
 
@@ -48,11 +53,5 @@ The QGIS plugin allows for the spatial location of a selected address point, str
 * For some addresses, postal codes are missing in the GUGiK database. In such cases, use 00-000 or leave the value empty.
 * If the service returns multiple address points, all of them will be added to the result layers.
 
-#### Sample geocoding input file/  Przykładowy plik do geokodowania:
-```
-miasto,ulica,kod,numer
-Warszawa, Szeligowska, 01-320, 32A
-Marki, Andersa,, 1
-Słupno, Lipowa, 09-472, 4
-Słupno, Lipowa, 05-250, 4
-```
+### Sample geocoding input file
+Sample data for geocoding can be found at the link https://downloads.envirosolutions.pl/sample-data.csv [access 2025-12-10]
