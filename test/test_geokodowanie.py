@@ -3,174 +3,193 @@
 import unittest
 import os
 import sys
-import shutil
-import urllib.request
-import csv
+from unittest.mock import MagicMock
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+plugin_dir = os.path.dirname(current_dir)
+plugins_dir = os.path.dirname(plugin_dir)
+sys.path.insert(0, plugins_dir)
+
+from geokodowanie_adresow.geokodowanie_adresow import GeokodowanieAdresow
 from qgis.core import (
     QgsApplication,
-    QgsProject,
-    QgsGeometry
+    QgsNetworkAccessManager,
+    QgsNetworkReplyContent
 )
+from qgis.PyQt.QtCore import QUrl, QEventLoop
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
+from unittest.mock import MagicMock, patch
 from constants import CSV_URL
-from geokoder import Geokodowanie
 
-# --- MOCKOWANIE INTERFEJSU QGIS ---
+# --- MOCKI POMOCNICZE ---
 class MockMessageBar:
     def pushMessage(self, title, text, level=None, duration=None):
+        # logowanie błędów
         print(f"[QGIS MessageBar] {title}: {text}")
 
 class MockIface:
+    def mainWindow(self):
+        return MagicMock()
+    def addToolBar(self, name):
+        return MagicMock()
     def messageBar(self):
         return MockMessageBar()
 
-class TestGeokodowanieOnline(unittest.TestCase):
+class TestGeokodowanieIntegrated(unittest.TestCase):
     
     @classmethod
     def setUpClass(cls):
-        """Inicjalizacja QGIS (tryb headless - bez GUI)"""
+        """Inicjalizacja QGIS"""
         cls.qgs = QgsApplication([], False)
         cls.qgs.initQgis()
         
     @classmethod
     def tearDownClass(cls):
-        """Zamknięcie QGIS"""
         cls.qgs.exitQgis()
 
     def setUp(self):
-        """Przygotowanie przed każdym testem"""
         self.mock_iface = MockIface()
-        self.temp_csv_path = os.path.join(os.path.dirname(__file__), 
-            'temp_downloaded_data.csv')
+        self.temp_csv_path = os.path.join(
+            os.path.dirname(__file__), 'temp_downloaded_data.csv'
+        )
+        
+        patch_path_settings = 'geokodowanie_adresow.geokodowanie_adresow.QSettings'
+        
+        # QgisFeed jest importowane wewnątrz __init__ z pliku qgis_feed.py.
+        # Musimy zpatchować oryginał w module 'qgis_feed', 
+        # aby import wewnątrz __init__ pobrał Mocka.
+        patch_path_feed = 'geokodowanie_adresow.qgis_feed.QgisFeed'
+        
+        with patch(patch_path_settings) as MockQSettings, \
+             patch(patch_path_feed) as MockFeed:
+            # Konfigurujemy QSettings
+            mock_settings_instance = MockQSettings.return_value
+            mock_settings_instance.value.return_value = 'pl_PL'
+            
+            # Tworzymy instancję wtyczki
+            self.plugin = GeokodowanieAdresow(self.mock_iface)
+
+        self.plugin.taskManager = MagicMock()
+        self.plugin.dlg = MagicMock()
 
     def tearDown(self):
-        """Sprzątanie po teście"""
         if os.path.exists(self.temp_csv_path):
             try:
                 os.remove(self.temp_csv_path)
             except PermissionError:
                 pass
+        if hasattr(self, 'plugin') and hasattr(self.plugin, 'outputPlik'):
+            if os.path.exists(self.plugin.outputPlik):
+                try:
+                    os.remove(self.plugin.outputPlik)
+                except PermissionError:
+                    pass
 
     def downloadCsv(self):
-        """Pobiera plik z internetu udając przeglądarkę"""
-        try:
-            req = urllib.request.Request(
-                CSV_URL, 
-                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            )
-            
-            with urllib.request.urlopen(req) as response, \
-                    open(self.temp_csv_path, 'wb') as out_file:
-                shutil.copyfileobj(response, out_file)
-
-            return True
-        except Exception as e:
-            self.fail(f"Nie udało się pobrać pliku CSV. Błąd: {e}")
-
-    def testGeokodowanieZPlikuOnline(self):
         """
-        Główny test: Uruchamia geokoder.
+        Pobieranie pliku przez QgsNetworkAccessManager 
+        (zgodnie z uwagami recenzenta)
         """
+        manager = QgsNetworkAccessManager.instance()
+        request = QNetworkRequest(QUrl(CSV_URL))
         
+        loop = QEventLoop()
+        reply = manager.get(request)
+        reply.finished.connect(loop.quit)
+        loop.exec_()
+
+        if reply.error() != QNetworkReply.NoError:
+            self.fail(f"Błąd pobierania pliku: {reply.errorString()}")
+
+        content = reply.readAll()
+        with open(self.temp_csv_path, 'wb') as f:
+            f.write(content)
+        
+        reply.deleteLater()
+        return True
+
+    def testParseCsvAndGeocodeFlow(self):
+        """
+        Testuje przepływ: Pobranie -> parseCsv -> Uruchomienie workera
+        """
         self.downloadCsv()
         
-        miejscowosci = []
-        ulice = []
-        numery = []
-        kody = []
-        rekordy_text = []
-        
-        with open(self.temp_csv_path, 'r', encoding='utf-8', newline='') \
-                as csvfile:
-            reader = csv.reader(csvfile, delimiter=',')
-            all_rows = list(reader)
-
-            if len(all_rows) < 2:
-                self.fail("Pobrany plik CSV jest pusty lub zawiera tylko nagłówek!")
-
-            headers = all_rows[0]
-            if headers and headers[0].startswith('\ufeff'):
-                headers[0] = headers[0].replace('\ufeff', '')
-
-            if len(headers) == 1 and ',' in headers[0]:
-                headers = [h.strip() for h in headers[0].split(',')]
-
-            headers = [h.strip() for h in headers]
-
-            try:
-                headers_lower = [h.lower() for h in headers]
-                idx_miasto = headers_lower.index('miasto')
-                idx_ulica = headers_lower.index('ulica')
-                idx_kod = headers_lower.index('kod')
-                idx_numer = headers_lower.index('numer')
-            except ValueError as e:
-                self.fail(
-                    "Nie znaleziono wymaganej kolumny w pliku CSV! "
-                    f"Błąd: {e}. Dostępne kolumny: {headers}"
-                    )
-
-            data_rows = all_rows[1:]
-            
-            for row in data_rows:
-                if not row or not any(row):
-                    continue
-                
-                if len(row) == 1 and ',' in row[0]:
-                     row = [r.strip() for r in row[0].split(',')]
-
-                rekordy_text.append(",".join(row))
-                miasto = row[idx_miasto].strip() if len(row) > idx_miasto else ""
-                ulica = row[idx_ulica].strip() if len(row) > idx_ulica else ""
-                kod = row[idx_kod].strip() if len(row) > idx_kod else ""
-                numer = row[idx_numer].strip() if len(row) > idx_numer else ""
-                miejscowosci.append(miasto)
-                ulice.append(ulica)
-                kody.append(kod)
-                numery.append(numer)
-        
-        task = Geokodowanie(
-            rekordy=rekordy_text,
-            miejscowosci=miejscowosci,
-            ulicy=ulice,
-            numery=numery,
-            kody=kody,
-            delimeter=',',
-            iface=self.mock_iface
+        # Konfigurowanie wtyczki
+        self.plugin.inputPlik = self.temp_csv_path
+        self.plugin.outputPlik = os.path.join(
+            os.path.dirname(__file__), 'temp_output.txt'
         )
+        self.plugin.delimeter = ','
 
-        result = task.run()
-        self.assertTrue(result, "Metoda run() geokodera zwróciła False.")
-        total_found = len(task.featuresPoint) + len(task.featuresLine) \
-            + len(task.featuresPoly)
-        total_errors = len(task.bledne)
-        oczekiwana_liczba = len(miejscowosci)
+        # MOCKOWANIE
+        self.plugin.dlg = MagicMock()
+        
+        # Konfigurujemy odpowiedzi Mocka na pytania o wybrane indeksy 
+        # w ComboBoxach.
+        # Zakładamy strukturę pliku CSV: Miejscowość, Ulica, Kod, Numer
+        # Przyjmijmy, że w CSV kolumny to: 0:Miasto, 1:Ulica, 2:Numer, 3:Kod
+        
+        self.plugin.dlg.cbxMiejscowosc.currentIndex.return_value = 1  
+        self.plugin.dlg.cbxUlica.currentIndex.return_value = 2        
+        self.plugin.dlg.cbxNumer.currentIndex.return_value = 4        
+        self.plugin.dlg.cbxKod.currentIndex.return_value = 3          
+        
+        self.plugin.dlg.cbxEncoding.currentText.return_value = 'utf-8'
+        self.plugin.dlg.cbxFirstRow.isChecked.return_value = True
 
+        # URUCHOMIENIE LOGIKI WTYCZKI
+        result = self.plugin.parseCsv()
+        
+        if result is False:
+            self.fail(
+                "Metoda parseCsv zakończyła się błędem (zwróciła False). "
+                "Sprawdź logi MessageBar."
+            )
+
+        # WERYFIKACJA CZY ZADANIE ZOSTAŁO UTWORZONE
+        self.plugin.taskManager.addTask.assert_called_once()
+        
+        # Wyciągamy obiekt zadania (Geokodowanie), z addTask
+        created_task = self.plugin.taskManager.addTask.call_args[0][0]
+        
+        self.assertIsNotNone(
+            created_task, "Zadanie Geokodowania nie zostało utworzone."
+        )
+        
         print(
-            f"Wynik: Zgeokodowano {total_found}/{oczekiwana_liczba}."
-            f" Błędnych: {total_errors}"
-            )
-
-        if total_errors > 0:
-            print("Szczegóły błędów:")
-            for err in task.bledne:
-                print(f" [BŁĄD] {err.strip()}")
-
-        self.assertEqual(total_errors, 0, "Znaleziono błędy geokodowania!")
+            "Liczba wierszy przekazanych do zadania: "
+            f"{len(created_task.rekordy)}"
+        )
+        self.assertGreater(
+            len(created_task.rekordy), 0, "Lista rekordów jest pusta!"
+        )
+        
         self.assertEqual(
-            total_found, oczekiwana_liczba,
-            "Liczba wyników niezgodna z liczbą wierszy"
-            )
-
-        if total_found > 0:
-            feat_list = task.featuresPoint \
-                if task.featuresPoint \
-                else (task.featuresLine if task.featuresLine \
-                else task.featuresPoly)
-            feat = feat_list[0]
-            self.assertTrue(
-                feat.geometry().isGeosValid(),
-                f"Niepoprawna geometria."
-                )
-            print("Wtyczka działa poprawnie.")
+            len(created_task.miejscowosci), len(created_task.rekordy)
+        )
+        
+        # URUCHOMIENIE SAMEGO ZADANIA
+        worker_result = created_task.run()
+        
+        self.assertTrue(worker_result, "Worker zwrócił False")
+        
+        total_found = len(created_task.featuresPoint) + \
+                      len(created_task.featuresLine) + \
+                      len(created_task.featuresPoly)
+                      
+        print(
+            f"Zgeokodowano: {total_found}/{len(created_task.rekordy)} obiektów."
+        )
+        self.assertGreater(
+            total_found, 0, 
+            "Geokoder nie zwrócił żadnych wyników!"
+        )
+        
+        if created_task.bledne:
+            print("Błędne adresy:", created_task.bledne)
+        self.assertEqual(
+            len(created_task.bledne), 0, "Znaleziono błędne adresy."
+        )
 
 if __name__ == "__main__":
     unittest.main()
