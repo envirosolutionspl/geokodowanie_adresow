@@ -33,8 +33,6 @@ class Geokodowanie(QgsTask):
         self.bledne = []
         self.service = "http://services.gugik.gov.pl/uug/?"  # Adres usługi geokodowania GUGiK
 
-        self.qgs_tools.pushMessage("Zaczął się proces geokodowania.")
-
     def run(self):
         """
         Funkcja przetwarza rekordy, wykonując geokodowanie dla każdej pozycji,
