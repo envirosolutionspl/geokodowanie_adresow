@@ -513,7 +513,6 @@ class GeokodowanieAdresow:
                         )
 
                     except Exception as e:
-                        # Informuje o błędzie podczas przetwarzania rekordu
                         msg  = f"Błąd przetwarzania rekordu {str(e)}"
                         self.qgs_tools.pushCritical(msg)
                         self.qgs_tools.pushLogCritical(msg)
@@ -634,7 +633,8 @@ class GeokodowanieAdresow:
             msg = (
                 "Proces geokodowania został zatrzymany: "
                 f"Zdekodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
-                f" Błędnie zgeokodowane adresy zostały zapisane w pliku {self.outputPlik}."
+                " Błędnie zgeokodowane adresy zostały zapisane w "
+                f"pliku {self.outputPlik}."
             )
             self.qgs_tools.pushMessage(msg)        
         # Wyświetlenie komunikatu, jeśli są błędne adresy lub żaden adres nie został zgeokodowany
@@ -656,7 +656,8 @@ class GeokodowanieAdresow:
             msg = (
                 "Wynik geokodowania: "
                 f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow}. "
-                f"Dla niektórych adresów usługa geokodowania zwróciła kilka wartości."
+                "Dla niektórych adresów usługa geokodowania zwróciła "
+                "kilka wartości."
             )
             self.qgs_tools.pushSuccess(msg)
         
@@ -666,6 +667,7 @@ class GeokodowanieAdresow:
                 "Wynik geokodowania:"
                 f"Zgeokodowano wszystkie {iloscZgeokodowanych} adresów"
             )
+            self.qgs_tools.pushSuccess(msg)
       
     def checkInternetConnection(self):
         """
@@ -697,34 +699,33 @@ class GeokodowanieAdresow:
             if timer.isActive():
                 timer.stop()
                 if reply.error() == QNetworkReply.NoError:
-                    status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+                    status = reply.attribute(
+                        QNetworkRequest.HttpStatusCodeAttribute
+                    )
                     if status == 200:
                         return True
                     else:
-                        QgsMessageLog.logMessage(
-                            f"Connection check failed. Status: {status}",
-                            PLUGIN_NAME,
-                            Qgis.Warning
+                        msg = (
+                            "Connection check failed. Status: {status}"
                         )
+                        self.qgs_tools.pushWarning(msg)
+                        self.qgs_tools.pushLogWarning(msg)
                 else:
-                    QgsMessageLog.logMessage(
-                        f"Connection check error: {reply.errorString()}",
-                        PLUGIN_NAME,
-                        Qgis.Warning
+                    msg = (
+                        "Connection check error: {reply.errorString()}"
                     )
+                    self.qgs_tools.pushWarning(msg)
+                    self.qgs_tools.pushLogWarning(msg)
             else:
                 reply.abort()
-                QgsMessageLog.logMessage(
-                    "Connection check timed out",
-                    PLUGIN_NAME,
-                    Qgis.Warning
-                )
-                
+                msg = "Connection check timed out"
+                self.qgs_tools.pushWarning(msg)
+                self.qgs_tools.pushLogWarning(msg)
+               
             return False
+        
         except Exception as e:
-            QgsMessageLog.logMessage(
-                f"Connection check exception: {str(e)}",
-                PLUGIN_NAME,
-                Qgis.Critical
-            )
+            msg = f"Connection check exception: {str(e)}"
+            self.qgs_tools.pushCritical(msg)
+            self.qgs_tools.pushLogCritical(msg) 
             return False
