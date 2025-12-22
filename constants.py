@@ -15,3 +15,5 @@ INDUSTRIES = {
     "it": "IT",
     "n": "Nieruchomości"
 }
+
+CSV_URL = "https://downloads.envirosolutions.pl/sample-data.csv"
