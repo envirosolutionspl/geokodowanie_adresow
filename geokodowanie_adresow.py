@@ -216,6 +216,7 @@ class GeokodowanieAdresow:
 
         # will be set False in run()
         self.first_start = True
+        self.qgs_tools.pushLogInfo(f"{PLUGIN_NAME} initialized correctly")
 
         
     def unload(self):
@@ -297,6 +298,9 @@ class GeokodowanieAdresow:
 
         # Wywołuje okno dialogowe do wyboru pliku CSV i zapisuje ścieżkę do zmiennej self.plik
         self.inputPlik = self.dlg.qfwInputFile.filePath()
+        self.qgs_tools.pushLogInfo(
+            f"Wybrany plik wejściowy: {self.inputPlik}"
+        )
         
         # Sprawdza, czy użytkownik wybrał plik
         if self.inputPlik != '':
@@ -320,6 +324,7 @@ class GeokodowanieAdresow:
         
         # Wywołuje okno dialogowe do zapisu pliku tekstowego i zapisuje ścieżkę do zmiennej self.outputPlik
         self.outputPlik = self.dlg.qfwOutputFile.filePath()
+        self.qgs_tools.pushLogInfo(f"Wybrane pliki: {self.outputPlik}")
         
         # Sprawdza, czy użytkownik wybrał miejsce zapisu pliku
         if self.outputPlik != '':
@@ -361,6 +366,7 @@ class GeokodowanieAdresow:
                         " kodowania do pliku z adresami. Spróbuj innego kodowania."
                     )
                     self.qgs_tools.pushWarning(msg)
+                    self.qgs_tools.pushLogWarning(msg)
                     return False
                 
                 # Rozdziela elementy nagłówka za pomocą określonego separatora i usuwa białe znaki z każdego elementu
@@ -373,6 +379,11 @@ class GeokodowanieAdresow:
                 self.dlg.cbxUlica.addItems(elementyNaglowkow)
                 self.dlg.cbxNumer.addItems(elementyNaglowkow)
                 self.dlg.cbxKod.addItems(elementyNaglowkow)
+
+                self.qgs_tools.pushLogInfo(
+                    f"Czyta nagłówki: {elementyNaglowkow}"
+                )
+
 
                 
     def csvCheck(
@@ -468,6 +479,13 @@ class GeokodowanieAdresow:
         idNumer = self.dlg.cbxNumer.currentIndex()
         idKod = self.dlg.cbxKod.currentIndex()
 
+        msg = (
+            f"Rozpoczyna parsowanie pliku CSV. Kolumny uwzględniane: - "
+            f"Miasto: {idMiejscowosc}, Ulica: {idUlica}, "
+            f"Numer: {idNumer}, Kod: {idKod}"
+        )
+        self.qgs_tools.pushLogInfo(msg)
+
         # Sprawdza, czy co najmniej jeden atrybut jest wybrany
         if not idMiejscowosc and not idUlica and not idNumer and not idKod:
             # Informuje użytkownika, że nie wybrano żadnych atrybutów
@@ -516,6 +534,9 @@ class GeokodowanieAdresow:
 
                 # sprawdzenie czy plik CSV jest poprawny
                 if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer, idKod):
+                    msg = "Plik CSV jest niepoprawny"
+                    self.qgs_tools.pushLogWarning(msg)
+                    self.qgs_tools.pushWarning(msg)
                     return False
                 
                 # Przetwarza rekordy i tworzy listy wartości dla poszczególnych atrybutów
@@ -532,6 +553,7 @@ class GeokodowanieAdresow:
                         # Informuje o błędzie podczas przetwarzania rekordu
                         msg  = f"Błąd przetwarzania rekordu {str(e)}"
                         self.qgs_tools.pushCritical(msg)
+                        self.qgs_tools.pushLogCritical(msg)
                         continue
 
                 # Tworzy obiekt zadania geokodowania i dodaje je do menedżera zadań
@@ -666,6 +688,12 @@ class GeokodowanieAdresow:
         iloscZgeokodowanych = len(featuresLine) + len(featuresPoint) + len(featuresPoly)
         iloscRekordow = len(self.rekordy)
         
+        self.qgs_tools.pushLogInfo(
+            f"Geocoding finished. Processed {iloscRekordow} records. "
+            f"Geocoded: {iloscZgeokodowanych}."
+        )
+
+        
         # Wyświetlenie komunikatu, jeśli proces geokodowania został zatrzymany
         if stop:
             msg = (
@@ -673,7 +701,7 @@ class GeokodowanieAdresow:
                 f"Zdekodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
                 f" Błędnie zgeokodowane adresy zostały zapisane w pliku {self.outputPlik}."
             )
-            self.qgs_tools.pushInfo(msg)        
+            self.qgs_tools.pushMessage(msg)        
         # Wyświetlenie komunikatu, jeśli są błędne adresy lub żaden adres nie został zgeokodowany
         elif bledne or iloscZgeokodowanych == 0:
             iloscBledow = len(bledne)
@@ -684,7 +712,7 @@ class GeokodowanieAdresow:
                 f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow}. "
                 f"Pozostałe zostały zapisane w pliku {self.outputPlik}."
             )
-            self.qgs_tools.pushInfo(msg)
+            self.qgs_tools.pushMessage(msg)
         
         # Wyświetlenie komunikatu, jeśli liczba zgeokodowanych adresów jest większa niż liczba rekordów
         elif iloscZgeokodowanych > iloscRekordow:
