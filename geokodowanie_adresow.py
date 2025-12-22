@@ -49,6 +49,7 @@ from .geokoder import Geokodowanie
 
 from .constants import REP, GUGIK, PARAMS, EPSG
 from . import PLUGIN_NAME, PLUGIN_VERSION
+from .utils import QgsTools
 
 
 
@@ -86,7 +87,8 @@ class GeokodowanieAdresow:
             self.translator = QTranslator()
             self.translator.load(locale_path)
             QCoreApplication.installTranslator(self.translator)
-
+        self.qgs_tools = QgsTools(self.iface)
+        # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&EnviroSolutions')
         self.toolbar = self.iface.mainWindow().findChild(QToolBar, 
@@ -200,6 +202,7 @@ class GeokodowanieAdresow:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.first_start = True
+        self.qgs_tools.pushLogInfo(f"{PLUGIN_NAME} initialized correctly")
 
     def unload(self):
         """Usuwa elementy menu i ikony paska narzędzi z interfejsu QGIS."""
@@ -275,7 +278,11 @@ class GeokodowanieAdresow:
         Po wybraniu pliku aktualizuje interfejs użytkownika.
         """
         self.inputPlik = self.dlg.qfwInputFile.filePath()
-
+        self.qgs_tools.pushLogInfo(
+            f"Wybrany plik wejściowy: {self.inputPlik}"
+        )
+        
+        # Sprawdza, czy użytkownik wybrał plik
         if self.inputPlik != '':
             self.isInputFile = True 
             if self.isInputFile and self.isOutputFile:
@@ -288,7 +295,9 @@ class GeokodowanieAdresow:
         Po wybraniu miejsca zapisu aktualizuje interfejs użytkownika.
         """
         self.outputPlik = self.dlg.qfwOutputFile.filePath()
-    
+        self.qgs_tools.pushLogInfo(f"Wybrane pliki: {self.outputPlik}")
+        
+        # Sprawdza, czy użytkownik wybrał miejsce zapisu pliku
         if self.outputPlik != '':
             self.isOutputFile = True
             if self.isInputFile and self.isOutputFile:
@@ -318,13 +327,12 @@ class GeokodowanieAdresow:
                 try:
                     naglowki = plik.readline()
                 except UnicodeDecodeError:
-                    self.iface.messageBar().pushMessage(
-                        "Błąd kodowania:",
-                        "Nie udało się zastosować wybranego kodowania "
-                        "do pliku z adresami. Spróbuj innego kodowania.",
-                        level=Qgis.Warning, 
-                        duration=5
+                    msg = (
+                        "Błąd kodowania: Nie udało się zastosować wybranego"
+                        " kodowania do pliku z adresami. Spróbuj innego kodowania."
                     )
+                    self.qgs_tools.pushWarning(msg)
+                    self.qgs_tools.pushLogWarning(msg)
                     return False
 
                 elementyNaglowkow = naglowki.split(self.delimeter)
@@ -335,6 +343,12 @@ class GeokodowanieAdresow:
                 self.dlg.cbxNumer.addItems(elementyNaglowkow)
                 self.dlg.cbxKod.addItems(elementyNaglowkow)
 
+                self.qgs_tools.pushLogInfo(
+                    f"Czyta nagłówki: {elementyNaglowkow}"
+                )
+
+
+                
     def csvCheck(
             self, 
             rekordy, 
@@ -357,12 +371,11 @@ class GeokodowanieAdresow:
                     wartosci[idKod - 1]
 
             except IndexError:
-                self.iface.messageBar().pushMessage(
-                    "Błąd wczytywania pliku:",
-                    f"błąd w wierszu nr {rekordy.index(rekord)}: {rekord}",
-                    level=Qgis.Critical, 
-                    duration=5
+                msg = (
+                    "Błąd wczytywania pliku: błąd w wierszu nr"
+                    f"{rekordy.index(rekord)}: {rekord}"
                 )
+                self.qgs_tools.pushCritical(msg)
                 return False
         return True
 
@@ -418,20 +431,25 @@ class GeokodowanieAdresow:
         idNumer = self.dlg.cbxNumer.currentIndex()
         idKod = self.dlg.cbxKod.currentIndex()
 
+        msg = (
+            f"Rozpoczyna parsowanie pliku CSV. Kolumny uwzględniane: - "
+            f"Miasto: {idMiejscowosc}, Ulica: {idUlica}, "
+            f"Numer: {idNumer}, Kod: {idKod}"
+        )
+        self.qgs_tools.pushLogInfo(msg)
+
+        # Sprawdza, czy co najmniej jeden atrybut jest wybrany
         if not idMiejscowosc and not idUlica and not idNumer and not idKod:
-            self.iface.messageBar().pushMessage(
-                "Informacja: ", 
-                "Nie wybrano żadnych atrybutów.", 
-                Qgis.Info, 
-                duration =10
-            )
+            # Informuje użytkownika, że nie wybrano żadnych atrybutów
+            msg = "Nie wybrano żadnych atrybutów."
+            self.qgs_tools.pushWarning(msg)
+            return
+            msg = f"Nie wybrano żadnych atrybutów."
+            self.qgs_tools.pushMessage(msg)
+        # Sprawdza, czy wybrano miejscowość, jeśli nie, informuje użytkownika
         elif not idMiejscowosc:
-            self.iface.messageBar().pushMessage(
-                "Informacja: ", 
-                "Nie wybrano miejscowości.", 
-                Qgis.Info, 
-                duration =10
-            )
+            msg = f"Nie wybrano miejscowości."
+            self.qgs_tools.pushMessage(msg) 
         else:
             miejscowosci = []
             ulicy = []
@@ -466,8 +484,12 @@ class GeokodowanieAdresow:
                         headings=naglowki, 
                         hasHeadings=False
                     )
-                if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, 
-                    idNumer, idKod):
+
+                # sprawdzenie czy plik CSV jest poprawny
+                if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer, idKod):
+                    msg = "Plik CSV jest niepoprawny"
+                    self.qgs_tools.pushLogWarning(msg)
+                    self.qgs_tools.pushWarning(msg)
                     return False
                 
                 for rekord in self.rekordy:
@@ -491,12 +513,10 @@ class GeokodowanieAdresow:
                         )
 
                     except Exception as e:
-                        self.iface.messageBar().pushMessage(
-                            "Błąd przetwarzania rekordu", 
-                            str(e), 
-                            level=Qgis.Critical, 
-                            duration=3
-                        )
+                        # Informuje o błędzie podczas przetwarzania rekordu
+                        msg  = f"Błąd przetwarzania rekordu {str(e)}"
+                        self.qgs_tools.pushCritical(msg)
+                        self.qgs_tools.pushLogCritical(msg)
                         continue
 
                 # Tworzy obiekt geokodowania do menedżera zadań.
@@ -603,45 +623,48 @@ class GeokodowanieAdresow:
         )
         iloscRekordow = len(self.rekordy)
         
+        self.qgs_tools.pushLogInfo(
+            f"Geocoding finished. Processed {iloscRekordow} records. "
+            f"Geocoded: {iloscZgeokodowanych}."
+        )
+
+        
+        # Wyświetlenie komunikatu, jeśli proces geokodowania został zatrzymany
         if stop:
-            self.iface.messageBar().pushMessage(
-                "Proces geokodowania został zatrzymany:",
-                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
-                "Błędnie zgeokodowane adresy zostały zapisane"
-                f"w pliku {self.outputPlik}", 
-                level=Qgis.Info,
-                duration=5
+            msg = (
+                "Proces geokodowania został zatrzymany: "
+                f"Zdekodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
+                f" Błędnie zgeokodowane adresy zostały zapisane w pliku {self.outputPlik}."
             )
+            self.qgs_tools.pushMessage(msg)        
+        # Wyświetlenie komunikatu, jeśli są błędne adresy lub żaden adres nie został zgeokodowany
         elif bledne or iloscZgeokodowanych == 0:
             iloscBledow = len(bledne)
             bledne.insert(
                 0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n"
             )
             self.saveErrors(bledne)
-            
-            self.iface.messageBar().pushMessage(
-                "Wynik geokodowania:",
-                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
-                f" Pozostałe zostały zapisane w pliku {self.outputPlik}", 
-                level=Qgis.Info,
-                duration=5
+            msg = (
+                "Wynik geokodowania: "
+                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow}. "
+                f"Pozostałe zostały zapisane w pliku {self.outputPlik}."
             )
+            self.qgs_tools.pushMessage(msg)
+        
+        # Wyświetlenie komunikatu, jeśli liczba zgeokodowanych adresów jest większa niż liczba rekordów
         elif iloscZgeokodowanych > iloscRekordow:
-            self.iface.messageBar().pushMessage(
-                "Wynik geokodowania:",
-                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow} adresów."
-                "Niektóre adresy mają więcej niż jeden wynik.",
-                level=Qgis.Success,
-                duration=5
+            msg = (
+                "Wynik geokodowania: "
+                f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow}. "
+                f"Dla niektórych adresów usługa geokodowania zwróciła kilka wartości."
             )
+            self.qgs_tools.pushSuccess(msg)
+        
+        # Wyświetlenie komunikatu, jeśli wszystkie adresy zostały poprawnie zgeokodowane
         elif not bledne:
-            self.iface.messageBar().pushMessage(
-                "Wynik geokodowania:",
-                "Zgeokodowano wszystkie %i adresów" % (
-                    iloscZgeokodowanych
-                ),
-                level=Qgis.Success,
-                duration=5
+            msg = (
+                "Wynik geokodowania:"
+                f"Zgeokodowano wszystkie {iloscZgeokodowanych} adresów"
             )
       
     def checkInternetConnection(self):
