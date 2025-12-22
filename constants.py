@@ -16,4 +16,17 @@ INDUSTRIES = {
     "n": "Nieruchomości"
 }
 
-CSV_URL = "https://downloads.envirosolutions.pl/sample-data.csv"
+REP = {
+    "al.": "aleje", 
+    "Al.": "Aleje", 
+    "Pl.": "Plac", 
+    "pl.": "plac", 
+    "ul.":"", 
+    "Ul.":""
+}
+
+GUGIK = "http://services.gugik.gov.pl/uug/?"
+
+PARAMS = {"request": "GetAddress"}
+
+EPSG = 2180
