@@ -8,11 +8,10 @@ from qgis.core import (
     QgsGeometry,
     QgsFeature,
     QgsTask,
-    QgsMessageLog,
     QgsWkbTypes
     )
-from qgis.gui import QgsMessageBar
 from qgis.PyQt.QtCore import QObject, pyqtSignal
+from .utils import QgsTools
 
 class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list, list, list, bool)
@@ -20,6 +19,7 @@ class Geokodowanie(QgsTask):
     def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
+        self.qgs_tools = QgsTools(self.iface)
         self.rekordy = rekordy
         self.miejscowosci = miejscowosci
         self.ulicy = ulicy
@@ -33,14 +33,6 @@ class Geokodowanie(QgsTask):
         self.bledne = []
         self.service = "http://services.gugik.gov.pl/uug/?"  # Adres usługi geokodowania GUGiK
 
-        
-        self.iface.messageBar().pushMessage(
-            "Info: ", 
-            "Zaczął się proces geokodowania.", 
-            level=Qgis.Info,
-            duration=10
-        )
-
     def run(self):
         """
         Funkcja przetwarza rekordy, wykonując geokodowanie dla każdej pozycji,
@@ -52,7 +44,8 @@ class Geokodowanie(QgsTask):
 
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
-        QgsMessageLog.logMessage("Zaczął się proces geokodowania.")
+
+        self.qgs_tools.pushLogInfo("Zaczął się proces geokodowania.")
 
         for i, rekord in enumerate(self.rekordy):
             self.kilka = []
@@ -73,6 +66,13 @@ class Geokodowanie(QgsTask):
             # Jeśli geokodowanie nie zwróci wyniku, dodaj rekord do listy błędów
             if not wkt:
                 self.bledne.append(f"{self.miejscowosci[i]}{self.delimeter}{self.ulicy[i]}{self.delimeter}{self.numery[i]}{self.delimeter}{self.kody[i]}\n")
+                msg = (
+                    "Nie udało się geokodowanie adresu"
+                    f"{self.miejscowosci[i]} {self.ulicy[i]} "
+                    f"{self.numery[i]} {self.kody[i]}\n"
+                )
+                self.qgs_tools.pushLogWarning(msg)
+                self.qgs_tools.pushWarning(msg)
             else:
                 # Jeśli wynik geokodowania jest listą geometrii, przetwórz każdą geometrię osobno
                 geometries = wkt if isinstance(wkt, list) else [wkt]
@@ -100,6 +100,9 @@ class Geokodowanie(QgsTask):
             # Sprawdzenie, czy zadanie zostało anulowane
             if self.isCanceled():
                 self.stop = True
+                msg = "Geokodowanie zostało anulowane"
+                self.qgs_tools.pushLogWarning(msg)
+                self.qgs_tools.pushWarning(msg)
                 return False
             
         # Emitowanie sygnału zakończenia przetwarzania
@@ -139,25 +142,29 @@ class Geokodowanie(QgsTask):
         params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         request_url = self.service + params_url
 
-        QgsMessageLog.logMessage(f"Wysyłanie zapytania do api: {params}")
+        self.qgs_tools.pushLogInfo(f"Wysyłanie zapytania do api: {params}")
         
         try:
             # Wysłanie zapytania do serwera i odczytanie odpowiedzi
             response = urllib.request.urlopen(request_url).read()
             response_json = json.loads(response.decode('utf-8'))
         except urllib.error.URLError as e:
-            QgsMessageLog.logMessage(f"Nie udało się połączyć z usługą API: {e.reason}")
+            msg = f"Nie udało się połączyć z usługą API: {e.reason}"
+            self.qgs_tools.pushLogWarning(msg)
             return None
         except json.JSONDecodeError:
-            QgsMessageLog.logMessage("Nie udało się odczytać pliku JSON")
+            msg = "Nie udało się odczytać pliku JSON"
+            self.qgs_tools.pushLogCritical(msg)
             return None
         except Exception as e:
-            QgsMessageLog.logMessage(f"Zdarzył się nieoczekiwany błąd: {e}")
+            msg = f"Zdarzył się nieoczekiwany błąd: {e}"
+            self.qgs_tools.pushLogCritical(msg)
             return None
 
         # Sprawdzenie czy odpowiedź zawiera wyniki
         if "results" not in response_json or not response_json["results"]:
-            QgsMessageLog.logMessage("Usługa API nie zwróciła odpowiedzi.")
+            msg = "Usługa API nie zwróciła odpowiedzi."
+            self.qgs_tools.pushLogWarning(msg)
             return None
         # Jeśli znaleziono więcej niż jeden wynik, zwróć listę geometrii WKT
         elif response_json["found objects"] > 1:
@@ -170,11 +177,11 @@ class Geokodowanie(QgsTask):
 
     def finished(self, result):
         if not result and self.stop != True:
-            self.iface.messageBar().pushMessage(
-              "Błąd","Geokodowanie  nie powiodło się.",
-              level=Qgis.Warning,
-              duration=10
+            msg = (
+                f"Geokodowanie  nie powiodło się."
             )
+            self.qgs_tools.pushWarning(msg)
+            self.qgs_tools.pushLogWarning(msg)
             self.finishedProcessing.emit(
                 self.featuresPoint, 
                 self.featuresLine, 
