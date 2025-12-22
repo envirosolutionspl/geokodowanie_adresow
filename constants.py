@@ -28,3 +28,5 @@ REP = {
 GUGIK = "http://services.gugik.gov.pl/uug/?"
 
 PARAMS = {"request": "GetAddress"}
+
+EPSG = 2180

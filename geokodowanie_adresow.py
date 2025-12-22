@@ -22,40 +22,39 @@
  ***************************************************************************/
 """
 
-from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
+from qgis.PyQt.QtCore import (
+    QSettings, QTranslator, QCoreApplication, QEventLoop, QTimer, QUrl
+)
 from qgis.PyQt.QtGui import QIcon, QPixmap
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from qgis.PyQt.QtWidgets import QAction, QToolBar
-from qgis.core import Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes
-from qgis.PyQt.QtWidgets import QAction, QToolBar, QShortcut, QWidget, QLabel, QDialog, QComboBox
+from qgis.core import (
+    Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes, 
+    QgsNetworkAccessManager, QgsMessageLog
+)
+from qgis.PyQt.QtWidgets import (
+    QShortcut, QWidget, QLabel, QDialog, QComboBox
+)
 from qgis.PyQt import uic
 from qgis.PyQt.QtWidgets import QFileDialog
 from qgis.core import QgsSettings
 from . import encoding
 from os import path
-from requests.packages.urllib3.exceptions import InsecureRequestWarning
 import re
-import requests
 import os
 from .resources import *
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 
-from .constants import REP, GUGIK, PARAMS
+from .constants import REP, GUGIK, PARAMS, EPSG
 from . import PLUGIN_NAME, PLUGIN_VERSION
 
 
 
 class GeokodowanieAdresow:
-    """Wdrożenie wtyczki QGIS."""
 
     def __init__(self, iface):
-        """Konstruktor.
-
-        :param iface: Interfejs, który będzie przekazywany do tej klasy
-            który umożliwia manipulację aplikacją QGIS w czasie wykonywania.
-        :type iface: QgsInterface
-        """
         self.settings = QgsSettings() 
 
         if Qgis.QGIS_VERSION_INT >= 31000:
@@ -69,7 +68,10 @@ class GeokodowanieAdresow:
 
             select_indust_session = self.settings.value('selected_industry')
 
-            self.feed = QgisFeed(selected_industry=select_indust_session, plugin_name=PLUGIN_NAME)
+            self.feed = QgisFeed(
+                selected_industry=select_indust_session, 
+                plugin_name=PLUGIN_NAME
+            )
             self.feed.initFeed()
 
         self.iface = iface
@@ -212,7 +214,7 @@ class GeokodowanieAdresow:
         Metoda run, która jest wywoływana, gdy użytkownik kliknie 
         na ikonę w pasku narzędzi.
         """
-        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+
         if self.first_start == True:
             self.first_start = False
             self.dlg.qfwInputFile.fileChanged.connect(self.openInputFile)
@@ -390,13 +392,13 @@ class GeokodowanieAdresow:
                 fields += "&field=pole%i:string(0,-1)" % (i + 1)
 
         warstwaPoint = QgsVectorLayer(
-            "Point?crs=EPSG:2180" + fields
+            f"Point?crs=EPSG:{EPSG}" + fields
             , "zgeokodowane lokalizacje", "memory")
         warstwaLine = QgsVectorLayer(
-            "LineString?crs=EPSG:2180" + fields
+            f"LineString?crs=EPSG:{EPSG}" + fields
             , "zgeokodowane ulice", "memory")
         warstwaPoly = QgsVectorLayer(
-            "Polygon?crs=EPSG:2180" + fields
+            f"Polygon?crs=EPSG:{EPSG}" + fields
             , "zgeokodowane place", "memory")
 
         return warstwaPoint, warstwaLine, warstwaPoly
@@ -643,10 +645,63 @@ class GeokodowanieAdresow:
             )
       
     def checkInternetConnection(self):
+        """
+        Sprawdza, czy jest dostęp do internetu.
+        
+        Sprawdza, czy jest dostęp do internetu, próbując połączyć się z
+        serwerem GUGIK. Jeśli jest możliwe, zwraca True, w przeciwnym
+        razie zwraca False.
+        
+        :return: True, jeśli jest dostęp do internetu, False w przeciwnym
+        razie.
+        """
         try:
-            resp = requests.get(
-                GUGIK, verify=False, timeout=5
+            manager = QgsNetworkAccessManager.instance()
+            request = QNetworkRequest(QUrl(GUGIK))
+            
+            loop = QEventLoop()
+            timer = QTimer()
+            timer.setSingleShot(True)
+            
+            reply = manager.get(request)
+            
+            reply.finished.connect(loop.quit)
+            timer.timeout.connect(loop.quit)
+            
+            timer.start(5000)
+            loop.exec_()
+            
+            if timer.isActive():
+                timer.stop()
+                if reply.error() == QNetworkReply.NoError:
+                    status = reply.attribute(QNetworkRequest.HttpStatusCodeAttribute)
+                    if status == 200:
+                        return True
+                    else:
+                        QgsMessageLog.logMessage(
+                            f"Connection check failed. Status: {status}",
+                            PLUGIN_NAME,
+                            Qgis.Warning
+                        )
+                else:
+                    QgsMessageLog.logMessage(
+                        f"Connection check error: {reply.errorString()}",
+                        PLUGIN_NAME,
+                        Qgis.Warning
+                    )
+            else:
+                reply.abort()
+                QgsMessageLog.logMessage(
+                    "Connection check timed out",
+                    PLUGIN_NAME,
+                    Qgis.Warning
+                )
+                
+            return False
+        except Exception as e:
+            QgsMessageLog.logMessage(
+                f"Connection check exception: {str(e)}",
+                PLUGIN_NAME,
+                Qgis.Critical
             )
-            return resp.status_code == 200
-        except Exception:
             return False

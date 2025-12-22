@@ -1,5 +1,3 @@
-import urllib.request
-import urllib.parse
 import json
 
 from qgis.core import (
@@ -9,10 +7,12 @@ from qgis.core import (
     QgsFeature,
     QgsTask,
     QgsMessageLog,
-    QgsWkbTypes
+    QgsWkbTypes,
+    QgsBlockingNetworkRequest
     )
 from qgis.gui import QgsMessageBar
-from qgis.PyQt.QtCore import QObject, pyqtSignal
+from qgis.PyQt.QtCore import QObject, pyqtSignal, QUrl, QUrlQuery
+from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from .constants import GUGIK, PARAMS
 
 class Geokodowanie(QgsTask):
@@ -76,7 +76,8 @@ class Geokodowanie(QgsTask):
                 blad = self.delimeter.join([miasto, ulica, numer, kod])
                 self.bledne.append(f"{blad}\n")
             else:
-                # Jeśli wynik geokodowania jest listą geometrii, przetwórz każdą geometrię osobno
+                # Jeśli wynik geokodowania jest listą geometrii,
+                # przetwórz każdą geometrię osobno
                 geometries = wkt if isinstance(wkt, list) else [wkt]
                 for geom_wkt in geometries:
                     if geom_wkt not in unique_geometries:
@@ -119,7 +120,7 @@ class Geokodowanie(QgsTask):
             geometrii WKT, jeśli znaleziono więcej niż jeden wynik.
         """
         
-        params = PARAMS
+        params = PARAMS.copy()
         if (ulica and ulica.strip() == miasto.strip()) or (not ulica and numer):
             params["address"] = f"{kod} {miasto}, {numer}"
         elif not ulica or ulica == "": 
@@ -129,19 +130,44 @@ class Geokodowanie(QgsTask):
         else:
             params["address"] = f"{kod} {miasto}, {ulica} {numer}"
         
-        params_url = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
-        request_url = self.service + params_url
         QgsMessageLog.logMessage(f"Wysyłanie zapytania do api: {params}")
         
         try:
-            # Wysłanie zapytania do serwera i odczytanie odpowiedzi
-            response = urllib.request.urlopen(request_url).read()
-            response_json = json.loads(response.decode('utf-8'))
-        except urllib.error.URLError as e:
-            QgsMessageLog.logMessage(
-                f"Nie udało się połączyć z usługą API: {e.reason}"
-            )
-            return None
+            # Przygotowanie URL
+            base_url = self.service
+            if base_url.endswith('?'):
+                base_url = base_url[:-1]
+                
+            url = QUrl(base_url)
+            query = QUrlQuery()
+            for key, value in params.items():
+                query.addQueryItem(key, str(value))
+            url.setQuery(query)
+            
+            request = QNetworkRequest(url)
+            blocking_request = QgsBlockingNetworkRequest()
+            
+            # Wysłanie zapytania
+            result = blocking_request.get(request)
+            
+            if result != QgsBlockingNetworkRequest.NoError:
+                QgsMessageLog.logMessage(
+                    f"Nie udało się połączyć z usługą API: {blocking_request.errorMessage()}",
+                    level=Qgis.Warning
+                )
+                return None
+                
+            reply = blocking_request.reply()
+            if reply.error() != QNetworkReply.NoError:
+                 QgsMessageLog.logMessage(
+                    f"Nie udało się połączyć z usługą API: {reply.errorString()}",
+                    level=Qgis.Warning
+                )
+                 return None
+
+            response = reply.content()
+            response_json = json.loads(bytes(response).decode('utf-8'))
+
         except json.JSONDecodeError:
             QgsMessageLog.logMessage("Nie udało się odczytać pliku JSON")
             return None
