@@ -1,4 +1,6 @@
 import json
+import urllib.request
+import urllib.parse
 
 from qgis.core import (
     Qgis,
@@ -10,6 +12,7 @@ from qgis.core import (
     )
 from qgis.PyQt.QtCore import QObject, pyqtSignal
 from .utils import QgsTools
+from .constants import GUGIK, PARAMS
 
 class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list, list, list, bool)
@@ -24,6 +27,7 @@ class Geokodowanie(QgsTask):
         self.numery = numery
         self.kody = kody
         self.delimeter = delimeter
+        self.stop = False
         self.featuresLine = []
 
         self.featuresPoly = []
