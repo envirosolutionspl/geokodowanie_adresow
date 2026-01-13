@@ -25,7 +25,7 @@ REP = {
     "Ul.":""
 }
 
-GUGIK = "http://services.gugik.gov.pl/uug/?"
+GUGIK = "https://services.gugik.gov.pl/uug/?"
 
 PARAMS = {"request": "GetAddress"}
 

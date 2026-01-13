@@ -51,6 +51,11 @@ from .constants import REP, GUGIK, PARAMS, EPSG
 from . import PLUGIN_NAME, PLUGIN_VERSION
 from .utils import QgsTools
 
+if not hasattr(QEventLoop, 'exec'):
+    QEventLoop.exec = QEventLoop.exec_
+
+if not hasattr(QDialog, 'exec'):
+    QDialog.exec = QDialog.exec_
 
 
 class GeokodowanieAdresow:
@@ -257,7 +262,7 @@ class GeokodowanieAdresow:
 
         self.taskManager.cancelAll()
         self.dlg.show()
-        result = self.dlg.exec_()
+        result = self.dlg.exec()
 
         if result:
             pass
@@ -278,9 +283,6 @@ class GeokodowanieAdresow:
         Po wybraniu pliku aktualizuje interfejs użytkownika.
         """
         self.inputPlik = self.dlg.qfwInputFile.filePath()
-        self.qgs_tools.pushLogInfo(
-            f"Wybrany plik wejściowy: {self.inputPlik}"
-        )
         
         # Sprawdza, czy użytkownik wybrał plik
         if self.inputPlik != '':
@@ -295,7 +297,6 @@ class GeokodowanieAdresow:
         Po wybraniu miejsca zapisu aktualizuje interfejs użytkownika.
         """
         self.outputPlik = self.dlg.qfwOutputFile.filePath()
-        self.qgs_tools.pushLogInfo(f"Wybrane pliki: {self.outputPlik}")
         
         # Sprawdza, czy użytkownik wybrał miejsce zapisu pliku
         if self.outputPlik != '':
@@ -426,6 +427,13 @@ class GeokodowanieAdresow:
         jest poprawny, a następnie przetwarza rekordy, tworzy listy wartości
         dla poszczególnych atrybutów i inicjuje proces geokodowania.
         """
+        self.inputPlik = self.dlg.qfwInputFile.filePath()
+        self.outputPlik = self.dlg.qfwOutputFile.filePath()
+        msg = (
+            f"Plik wejściowy {self.inputPlik},"
+            f" Plik wyjściowy {self.outputPlik}."
+        )
+        self.qgs_tools.pushLogInfo(msg)
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
         idNumer = self.dlg.cbxNumer.currentIndex()
@@ -683,36 +691,52 @@ class GeokodowanieAdresow:
         try:
             manager = QgsNetworkAccessManager.instance()
             request = QNetworkRequest(QUrl(GUGIK))
-            
+
+            if hasattr(QNetworkRequest, 'KnownHeaders'):
+                ua_header = QNetworkRequest.KnownHeaders.UserAgentHeader
+            else:
+                ua_header = QNetworkRequest.UserAgentHeader
+            request.setHeader(
+                ua_header, f"QGIS-Plugin-{PLUGIN_NAME}"
+            )
+
             loop = QEventLoop()
             timer = QTimer()
             timer.setSingleShot(True)
-            
             reply = manager.get(request)
-            
             reply.finished.connect(loop.quit)
             timer.timeout.connect(loop.quit)
-            
             timer.start(5000)
-            loop.exec_()
+            loop.exec()
             
             if timer.isActive():
                 timer.stop()
-                if reply.error() == QNetworkReply.NoError:
+
+                error_val = reply.error()
+                if hasattr(QNetworkReply, 'NetworkError'):
+                    no_err = QNetworkReply.NetworkError.NoError # Qt6
+                else:
+                    no_err = QNetworkReply.NoError # Qt5
+
+                if error_val == no_err:
+                    if hasattr(QNetworkRequest, 'Attribute'):
+                        status_attr = QNetworkRequest.Attribute.HttpStatusCodeAttribute
+                    else:
+                        status_attr = QNetworkRequest.HttpStatusCodeAttribute
                     status = reply.attribute(
-                        QNetworkRequest.HttpStatusCodeAttribute
+                        status_attr
                     )
-                    if status == 200:
+                    if status in (200, 301, 302):
                         return True
                     else:
                         msg = (
-                            "Connection check failed. Status: {status}"
+                            f"Connection check failed. Status: {status}"
                         )
                         self.qgs_tools.pushWarning(msg)
                         self.qgs_tools.pushLogWarning(msg)
                 else:
                     msg = (
-                        "Connection check error: {reply.errorString()}"
+                        f"Connection check error: {reply.errorString()}"
                     )
                     self.qgs_tools.pushWarning(msg)
                     self.qgs_tools.pushLogWarning(msg)
