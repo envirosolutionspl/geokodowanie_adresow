@@ -21,6 +21,9 @@ from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from unittest.mock import MagicMock, patch
 from constants import CSV_URL
 
+if not hasattr(QEventLoop, 'exec'):
+    QEventLoop.exec = QEventLoop.exec_
+
 # --- MOCKI POMOCNICZE ---
 class MockMessageBar:
     def pushMessage(self, title, text, level=None, duration=None):
@@ -50,7 +53,10 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
     def setUp(self):
         self.mock_iface = MockIface()
         self.temp_csv_path = os.path.join(
-            os.path.dirname(__file__), 'temp_downloaded_data.csv'
+            current_dir, 'temp_downloaded_data.csv'
+        )
+        self.temp_output_path = os.path.join(
+            current_dir, 'temp_output.txt'
         )
         
         patch_path_settings = 'geokodowanie_adresow.geokodowanie_adresow.QSettings'
@@ -78,12 +84,11 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
                 os.remove(self.temp_csv_path)
             except PermissionError:
                 pass
-        if hasattr(self, 'plugin') and hasattr(self.plugin, 'outputPlik'):
-            if os.path.exists(self.plugin.outputPlik):
-                try:
-                    os.remove(self.plugin.outputPlik)
-                except PermissionError:
-                    pass
+        if os.path.exists(self.temp_output_path):
+            try:
+                os.remove(self.temp_output_path)
+            except PermissionError:
+                pass
 
     def downloadCsv(self):
         """
@@ -96,9 +101,15 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         loop = QEventLoop()
         reply = manager.get(request)
         reply.finished.connect(loop.quit)
-        loop.exec_()
-
-        if reply.error() != QNetworkReply.NoError:
+        loop.exec()
+        error_val = reply.error()
+        
+        if hasattr(QNetworkReply, 'NetworkError'):
+            no_err = QNetworkReply.NetworkError.NoError # Qt6
+        else:
+            no_err = QNetworkReply.NoError # Qt5
+        
+        if error_val != no_err:
             self.fail(f"Błąd pobierania pliku: {reply.errorString()}")
 
         content = reply.readAll()
@@ -115,14 +126,14 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         self.downloadCsv()
         
         # Konfigurowanie wtyczki
-        self.plugin.inputPlik = self.temp_csv_path
-        self.plugin.outputPlik = os.path.join(
-            os.path.dirname(__file__), 'temp_output.txt'
-        )
+        #self.plugin.inputPlik = self.temp_csv_path
+        #self.plugin.outputPlik = os.path.join(
+        #    os.path.dirname(__file__), 'temp_output.txt'
+        #)
         self.plugin.delimeter = ','
 
-        # MOCKOWANIE
-        self.plugin.dlg = MagicMock()
+        self.plugin.dlg.qfwInputFile.filePath.return_value = self.temp_csv_path
+        self.plugin.dlg.qfwOutputFile.filePath.return_value = self.temp_output_path
         
         # Konfigurujemy odpowiedzi Mocka na pytania o wybrane indeksy 
         # w ComboBoxach.
