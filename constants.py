@@ -30,3 +30,5 @@ GUGIK = "https://services.gugik.gov.pl/uug/?"
 PARAMS = {"request": "GetAddress"}
 
 EPSG = 2180
+
+CSV_URL = "https://downloads.envirosolutions.pl/sample-data.csv"
