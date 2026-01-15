@@ -11,6 +11,9 @@ plugins_dir = os.path.dirname(plugin_dir)
 sys.path.insert(0, plugins_dir)
 
 from geokodowanie_adresow.geokodowanie_adresow import GeokodowanieAdresow
+from geokodowanie_adresow.utils import QgsTools
+from geokodowanie_adresow.constants import CSV_URL
+from geokodowanie_adresow import PLUGIN_NAME
 from qgis.core import (
     QgsApplication,
     QgsNetworkAccessManager,
@@ -19,11 +22,8 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QUrl, QEventLoop
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from unittest.mock import MagicMock, patch
-from constants import CSV_URL
-from utils import QgsTools
 
-if not hasattr(QEventLoop, 'exec'):
-    QEventLoop.exec = QEventLoop.exec_
+QgsTools.patchQtCompatibility()
 
 # --- MOCKI POMOCNICZE ---
 class MockMessageBar:
@@ -105,12 +105,11 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         loop.exec()
         error_val = reply.error()
         
-        if Utils.isCompatibleQtVersion(QT_VERSION_STR, 6):
-            no_err = QNetworkReply.NetworkError.NoError # Qt6
-        else:
-            no_err = QNetworkReply.NoError # Qt5
+        request.setHeader(
+            QgsTools.getUAHeader(), f"QGIS-Test-{PLUGIN_NAME}"
+        )
         
-        if error_val != no_err:
+        if reply.error() != QgsTools.getNetworkNoError():
             self.fail(f"Błąd pobierania pliku: {reply.errorString()}")
 
         content = reply.readAll()
@@ -201,3 +200,6 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+
