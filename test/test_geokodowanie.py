@@ -20,6 +20,7 @@ from qgis.PyQt.QtCore import QUrl, QEventLoop
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from unittest.mock import MagicMock, patch
 from constants import CSV_URL
+from utils import QgsTools
 
 if not hasattr(QEventLoop, 'exec'):
     QEventLoop.exec = QEventLoop.exec_
@@ -104,7 +105,7 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         loop.exec()
         error_val = reply.error()
         
-        if hasattr(QNetworkReply, 'NetworkError'):
+        if Utils.isCompatibleQtVersion(QT_VERSION_STR, 6):
             no_err = QNetworkReply.NetworkError.NoError # Qt6
         else:
             no_err = QNetworkReply.NoError # Qt5
@@ -126,10 +127,6 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         self.downloadCsv()
         
         # Konfigurowanie wtyczki
-        #self.plugin.inputPlik = self.temp_csv_path
-        #self.plugin.outputPlik = os.path.join(
-        #    os.path.dirname(__file__), 'temp_output.txt'
-        #)
         self.plugin.delimeter = ','
 
         self.plugin.dlg.qfwInputFile.filePath.return_value = self.temp_csv_path

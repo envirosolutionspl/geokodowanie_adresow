@@ -51,12 +51,7 @@ from .constants import REP, GUGIK, PARAMS, EPSG
 from . import PLUGIN_NAME, PLUGIN_VERSION
 from .utils import QgsTools
 
-if not hasattr(QEventLoop, 'exec'):
-    QEventLoop.exec = QEventLoop.exec_
-
-if not hasattr(QDialog, 'exec'):
-    QDialog.exec = QDialog.exec_
-
+QgsTools.patchQtCompatibility()
 
 class GeokodowanieAdresow:
 
@@ -427,6 +422,7 @@ class GeokodowanieAdresow:
         jest poprawny, a następnie przetwarza rekordy, tworzy listy wartości
         dla poszczególnych atrybutów i inicjuje proces geokodowania.
         """
+        # testowo
         self.inputPlik = self.dlg.qfwInputFile.filePath()
         self.outputPlik = self.dlg.qfwOutputFile.filePath()
         msg = (
@@ -434,6 +430,7 @@ class GeokodowanieAdresow:
             f" Plik wyjściowy {self.outputPlik}."
         )
         self.qgs_tools.pushLogInfo(msg)
+        #
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
         idNumer = self.dlg.cbxNumer.currentIndex()
@@ -692,12 +689,9 @@ class GeokodowanieAdresow:
             manager = QgsNetworkAccessManager.instance()
             request = QNetworkRequest(QUrl(GUGIK))
 
-            if hasattr(QNetworkRequest, 'KnownHeaders'):
-                ua_header = QNetworkRequest.KnownHeaders.UserAgentHeader
-            else:
-                ua_header = QNetworkRequest.UserAgentHeader
             request.setHeader(
-                ua_header, f"QGIS-Plugin-{PLUGIN_NAME}"
+                QgsTools.getUAHeader(), 
+                f"QGIS-Plugin-{PLUGIN_NAME}"
             )
 
             loop = QEventLoop()
@@ -709,43 +703,28 @@ class GeokodowanieAdresow:
             timer.start(5000)
             loop.exec()
             
-            if timer.isActive():
-                timer.stop()
-
-                error_val = reply.error()
-                if hasattr(QNetworkReply, 'NetworkError'):
-                    no_err = QNetworkReply.NetworkError.NoError # Qt6
-                else:
-                    no_err = QNetworkReply.NoError # Qt5
-
-                if error_val == no_err:
-                    if hasattr(QNetworkRequest, 'Attribute'):
-                        status_attr = QNetworkRequest.Attribute.HttpStatusCodeAttribute
-                    else:
-                        status_attr = QNetworkRequest.HttpStatusCodeAttribute
-                    status = reply.attribute(
-                        status_attr
-                    )
-                    if status in (200, 301, 302):
-                        return True
-                    else:
-                        msg = (
-                            f"Connection check failed. Status: {status}"
-                        )
-                        self.qgs_tools.pushWarning(msg)
-                        self.qgs_tools.pushLogWarning(msg)
-                else:
-                    msg = (
-                        f"Connection check error: {reply.errorString()}"
-                    )
-                    self.qgs_tools.pushWarning(msg)
-                    self.qgs_tools.pushLogWarning(msg)
-            else:
+            if not timer.isActive():
                 reply.abort()
-                msg = "Connection check timed out"
-                self.qgs_tools.pushWarning(msg)
-                self.qgs_tools.pushLogWarning(msg)
-               
+                self.logAndWar(
+                    "Problem z połączeniem do serwera GUGIK."
+                )
+                return False
+
+            timer.stop()
+
+            if reply.error() == QgsTools.getNetworkNoError():
+                status = reply.attribute(QgsTools.getHttpStatusAttr())
+                if status in (200, 301, 302):
+                    return True
+                self.logAndWar(
+                    "Problem z połączeniem do serwera GUGIK."
+                    f"Status: {status}"
+                )
+            else:
+                self.logAndWar(
+                    "Problem z połączeniem do serwera GUGIK."
+                    f"Error: {reply.errorString()}"
+                )
             return False
         
         except Exception as e:
@@ -753,3 +732,7 @@ class GeokodowanieAdresow:
             self.qgs_tools.pushCritical(msg)
             self.qgs_tools.pushLogCritical(msg) 
             return False
+
+    def logAndWar(self, msg):
+        self.qgs_tools.pushWarning(msg)
+        self.qgs_tools.pushLogWarning(msg)

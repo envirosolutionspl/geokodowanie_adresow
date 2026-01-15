@@ -32,3 +32,7 @@ PARAMS = {"request": "GetAddress"}
 EPSG = 2180
 
 CSV_URL = "https://downloads.envirosolutions.pl/sample-data.csv"
+
+QT_VER = {
+    6: "6."
+}
