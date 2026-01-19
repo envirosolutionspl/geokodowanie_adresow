@@ -53,52 +53,54 @@ NetworkTools.patchQtCompatibility()
 
 class GeokodowanieAdresow:
 
-    def __init__(self, iface):
+    def __init__(self, iface, is_tested=False):
         self.settings = QgsSettings() 
         self.iface = iface
         self.network_manager = QgsNetworkAccessManager.instance()
         self.notify_tools = NotifyTools(self.iface)
         self.network_toolkit = NetworkTools()
-
-        if Qgis.QGIS_VERSION_INT >= 31000:
-            from .qgis_feed import QgisFeed
-            self.selected_industry = self.settings.value("selected_industry", 
-                None)
-            show_dialog = self.settings.value("showDialog", True, type=bool)
-
-            if self.selected_industry is None and show_dialog:
-                self.showBranchSelectionDialog()
-
-            select_indust_session = self.settings.value('selected_industry')
-
-            self.feed = QgisFeed(
-                self,
-                selected_industry=select_indust_session, 
-                plugin_name=PLUGIN_NAME
-            )
-            self.feed.initFeed()
-
         self.plugin_dir = path.dirname(__file__)
-        locale = QSettings().value('locale/userLocale')[0:2]
-        locale_path = path.join(
-            self.plugin_dir,
-            'i18n',
-            'GeokodowanieAdresow_{}.qm'.format(locale))
 
-        if path.exists(locale_path):
-            self.translator = QTranslator()
-            self.translator.load(locale_path)
-            QCoreApplication.installTranslator(self.translator)
+        if not is_tested: 
+            if Qgis.QGIS_VERSION_INT >= 31000:
+                from .qgis_feed import QgisFeed
+                self.selected_industry = self.settings.value("selected_industry", 
+                    None)
+                show_dialog = self.settings.value("showDialog", True, type=bool)
+
+                if self.selected_industry is None and show_dialog:
+                    self.showBranchSelectionDialog()
+
+                select_indust_session = self.settings.value('selected_industry')
+
+                self.feed = QgisFeed(
+                    self,
+                    selected_industry=select_indust_session, 
+                    plugin_name=PLUGIN_NAME
+                )
+                self.feed.initFeed()
+
         
-        # Declare instance attributes
-        self.actions = []
-        self.menu = self.tr(u'&EnviroSolutions')
-        self.toolbar = self.iface.mainWindow().findChild(QToolBar, 
-            'EnviroSolutions')
+            locale = QSettings().value('locale/userLocale')[0:2]
+            locale_path = path.join(
+                self.plugin_dir,
+                'i18n',
+                'GeokodowanieAdresow_{}.qm'.format(locale))
 
-        if not self.toolbar:
-            self.toolbar = self.iface.addToolBar(u'EnviroSolutions')
-            self.toolbar.setObjectName(u'EnviroSolutions')
+            if path.exists(locale_path):
+                self.translator = QTranslator()
+                self.translator.load(locale_path)
+                QCoreApplication.installTranslator(self.translator)
+            
+            # Declare instance attributes
+            self.actions = []
+            self.menu = self.tr(u'&EnviroSolutions')
+            self.toolbar = self.iface.mainWindow().findChild(QToolBar, 
+                'EnviroSolutions')
+
+            if not self.toolbar:
+                self.toolbar = self.iface.addToolBar(u'EnviroSolutions')
+                self.toolbar.setObjectName(u'EnviroSolutions')
 
         self.first_start = None
         self.taskManager = QgsApplication.taskManager()

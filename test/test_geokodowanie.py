@@ -61,21 +61,8 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
             current_dir, 'temp_output.txt'
         )
         
-        patch_path_settings = 'geokodowanie_adresow.geokodowanie_adresow.QSettings'
-        
-        # QgisFeed jest importowane wewnątrz __init__ z pliku qgis_feed.py.
-        # Musimy zpatchować oryginał w module 'qgis_feed', 
-        # aby import wewnątrz __init__ pobrał Mocka.
-        patch_path_feed = 'geokodowanie_adresow.qgis_feed.QgisFeed'
-        
-        with patch(patch_path_settings) as MockQSettings, \
-             patch(patch_path_feed) as MockFeed:
-            # Konfigurujemy QSettings
-            mock_settings_instance = MockQSettings.return_value
-            mock_settings_instance.value.return_value = 'pl_PL'
-            
-            # Tworzymy instancję wtyczki
-            self.plugin = GeokodowanieAdresow(self.mock_iface)
+        # Tworzymy instancję wtyczki
+        self.plugin = GeokodowanieAdresow(self.mock_iface, is_tested=True)
 
         self.plugin.taskManager = MagicMock()
         self.plugin.dlg = MagicMock()
