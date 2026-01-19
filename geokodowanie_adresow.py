@@ -55,6 +55,8 @@ class GeokodowanieAdresow:
 
     def __init__(self, iface):
         self.settings = QgsSettings() 
+        self.iface = iface
+        self.qgs_tools = QgsTools(self.iface)
 
         if Qgis.QGIS_VERSION_INT >= 31000:
             from .qgis_feed import QgisFeed
@@ -68,12 +70,12 @@ class GeokodowanieAdresow:
             select_indust_session = self.settings.value('selected_industry')
 
             self.feed = QgisFeed(
+                self,
                 selected_industry=select_indust_session, 
                 plugin_name=PLUGIN_NAME
             )
             self.feed.initFeed()
 
-        self.iface = iface
         self.plugin_dir = path.dirname(__file__)
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = path.join(
@@ -85,7 +87,7 @@ class GeokodowanieAdresow:
             self.translator = QTranslator()
             self.translator.load(locale_path)
             QCoreApplication.installTranslator(self.translator)
-        self.qgs_tools = QgsTools(self.iface)
+        
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr(u'&EnviroSolutions')
@@ -200,7 +202,7 @@ class GeokodowanieAdresow:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.first_start = True
-        self.qgs_tools.pushLogInfo(f"{PLUGIN_NAME} initialized correctly")
+        self.qgs_tools.pushLogInfo(f"Wtyczka {PLUGIN_NAME} została zainicjalizowana poprawnie")
 
     def unload(self):
         """Usuwa elementy menu i ikony paska narzędzi z interfejsu QGIS."""
@@ -244,13 +246,9 @@ class GeokodowanieAdresow:
         
         connection = self.checkInternetConnection()
         if not connection:
-            self.iface.messageBar().pushMessage(
-                "Błąd",
-                "Brak połączenia z internetem lub usługa "
-                "GUGiK jest niedostępna.",
-                level=Qgis.Warning,
-                duration=10
-                )
+            msg = f"Brak połączenia z internetem lub usługa GUGiK jest niedostępna."
+            self.qgs_tools.pushWarning(msg) 
+            self.qgs_tools.pushLogWarning(msg)
             return
 
         self.taskManager.cancelAll()
@@ -338,10 +336,8 @@ class GeokodowanieAdresow:
                 self.dlg.cbxKod.addItems(elementyNaglowkow)
 
                 self.qgs_tools.pushLogInfo(
-                    f"Czyta nagłówki: {elementyNaglowkow}"
+                    f"Czytanie nagłówków: {elementyNaglowkow}"
                 )
-
-
                 
     def csvCheck(
             self, 
@@ -447,8 +443,6 @@ class GeokodowanieAdresow:
             msg = "Nie wybrano żadnych atrybutów."
             self.qgs_tools.pushWarning(msg)
             return
-            msg = f"Nie wybrano żadnych atrybutów."
-            self.qgs_tools.pushMessage(msg)
         # Sprawdza, czy wybrano miejscowość, jeśli nie, informuje użytkownika
         elif not idMiejscowosc:
             msg = f"Nie wybrano miejscowości."
@@ -626,10 +620,9 @@ class GeokodowanieAdresow:
         iloscRekordow = len(self.rekordy)
         
         self.qgs_tools.pushLogInfo(
-            f"Geocoding finished. Processed {iloscRekordow} records. "
-            f"Geocoded: {iloscZgeokodowanych}."
+            f"Geokodowanie zakończone. Przetworzono: {iloscRekordow} rekordów. "
+            f"Zgeokodowano: {iloscZgeokodowanych}."
         )
-
         
         # Wyświetlenie komunikatu, jeśli proces geokodowania został zatrzymany
         if stop:
@@ -703,9 +696,9 @@ class GeokodowanieAdresow:
             
             if not timer.isActive():
                 reply.abort()
-                self.logAndWar(
-                    "Problem z połączeniem do serwera GUGIK."
-                )
+                msg = "Nie otrzymano na czas odpowiedzi z GUGIK - Timeout."
+                self.qgs_tools.pushWarning(msg)
+                self.qgs_tools.pushLogWarning(msg)
                 return False
 
             timer.stop()
@@ -714,23 +707,19 @@ class GeokodowanieAdresow:
                 status = reply.attribute(QgsTools.getHttpStatusAttr())
                 if status in (200, 301, 302):
                     return True
-                self.logAndWar(
-                    "Problem z połączeniem do serwera GUGIK."
-                    f"Status: {status}"
-                )
+                msg = f"Nie połączono się z serwisem. Kod błędu: {status}"
+                self.qgs_tools.pushWarning(msg)
+                self.qgs_tools.pushLogWarning(msg)
             else:
-                self.logAndWar(
-                    "Problem z połączeniem do serwera GUGIK."
-                    f"Error: {reply.errorString()}"
-                )
+                msg = f"Problem z połączeniem do serwera GUGIK. Błąd: {reply.errorString()}"
+                self.qgs_tools.pushCritical(msg)
+                self.qgs_tools.pushLogCritical(msg) 
+
             return False
         
         except Exception as e:
-            msg = f"Connection check exception: {str(e)}"
+            msg = f"Nieznany problem z połączeniem: {str(e)}"
             self.qgs_tools.pushCritical(msg)
             self.qgs_tools.pushLogCritical(msg) 
             return False
 
-    def logAndWar(self, msg):
-        self.qgs_tools.pushWarning(msg)
-        self.qgs_tools.pushLogWarning(msg)

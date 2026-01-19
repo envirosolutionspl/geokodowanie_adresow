@@ -37,12 +37,7 @@ class Geokodowanie(QgsTask):
         self.featuresPoint = []
         self.bledne = []
         self.service = GUGIK
-        self.iface.messageBar().pushMessage(
-            "Info: ", 
-            "Zaczął się proces geokodowania.", 
-            level=Qgis.Info,
-            duration=10
-        )
+
 
     def run(self):
         """
@@ -57,7 +52,7 @@ class Geokodowanie(QgsTask):
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
 
-        self.qgs_tools.pushLogInfo("Zaczął się proces geokodowania.")
+        self.qgs_tools.pushLogInfo("Rozpoczęto proces geokodowania.")
 
         for i, rekord in enumerate(self.rekordy):
             self.kilka = []
