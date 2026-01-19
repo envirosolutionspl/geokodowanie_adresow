@@ -2,7 +2,6 @@ import json
 from qgis.PyQt.QtCore import QUrl, QUrlQuery, QEventLoop, pyqtSignal
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from qgis.PyQt.QtWidgets import QDialog
-from qgis.core import QgsNetworkAccessManager
 from qgis.core import (
     Qgis,
     QgsProject,
@@ -20,10 +19,12 @@ if not hasattr(QDialog, 'exec'):
 class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list, list, list, bool)
 
-    def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
+    def __init__(self, parent, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
+        self.parent = parent
         self.notify_tools = NotifyTools(self.iface)
+        self.network_manager = self.parent.network_manager
         self.rekordy = rekordy
         self.miejscowosci = miejscowosci
         self.ulicy = ulicy
@@ -147,7 +148,7 @@ class Geokodowanie(QgsTask):
         url.setQuery(query)
 
         request = QNetworkRequest(url)
-        reply = QgsNetworkAccessManager.instance().get(request)
+        reply = self.network_manager.get(request)
 
         msg = (
             f"Geokodowanie adresu {params}"

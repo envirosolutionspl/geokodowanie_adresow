@@ -52,6 +52,7 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         cls.qgs.exitQgis()
 
     def setUp(self):
+        self.network_manager = QgsNetworkAccessManager.instance()
         self.mock_iface = MockIface()
         self.temp_csv_path = os.path.join(
             current_dir, 'temp_downloaded_data.csv'
@@ -96,11 +97,10 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         Pobieranie pliku przez QgsNetworkAccessManager 
         (zgodnie z uwagami recenzenta)
         """
-        manager = QgsNetworkAccessManager.instance()
         request = QNetworkRequest(QUrl(CSV_URL))
         
         loop = QEventLoop()
-        reply = manager.get(request)
+        reply = self.network_manager.get(request)
         reply.finished.connect(loop.quit)
         loop.exec()
         error_val = reply.error()

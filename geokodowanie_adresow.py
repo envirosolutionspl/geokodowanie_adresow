@@ -56,6 +56,7 @@ class GeokodowanieAdresow:
     def __init__(self, iface):
         self.settings = QgsSettings() 
         self.iface = iface
+        self.network_manager = QgsNetworkAccessManager.instance()
         self.notify_tools = NotifyTools(self.iface)
         self.network_toolkit = NetworkTools()
 
@@ -518,6 +519,7 @@ class GeokodowanieAdresow:
 
                 # Tworzy obiekt geokodowania do menedżera zadań.
                 task = Geokodowanie(
+                    parent = self,
                     rekordy = self.rekordy, 
                     miejscowosci = miejscowosci, 
                     ulicy = ulicy, 
@@ -678,7 +680,6 @@ class GeokodowanieAdresow:
         razie.
         """
         try:
-            manager = QgsNetworkAccessManager.instance()
             request = QNetworkRequest(QUrl(GUGIK))
 
             request.setHeader(
@@ -689,7 +690,7 @@ class GeokodowanieAdresow:
             loop = QEventLoop()
             timer = QTimer()
             timer.setSingleShot(True)
-            reply = manager.get(request)
+            reply = self.network_manager.get(request)
             reply.finished.connect(loop.quit)
             timer.timeout.connect(loop.quit)
             timer.start(5000)
