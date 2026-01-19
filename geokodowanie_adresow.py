@@ -26,18 +26,16 @@ from qgis.PyQt.QtCore import (
     QSettings, QTranslator, QCoreApplication, QEventLoop, QTimer, QUrl
 )
 from qgis.PyQt.QtGui import QIcon, QPixmap
-from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
-from qgis.PyQt.QtWidgets import QAction, QToolBar
-from qgis.core import (
-    Qgis, QgsApplication, QgsVectorLayer, QgsProject, QgsWkbTypes, 
-    QgsNetworkAccessManager, QgsMessageLog
-)
+from qgis.PyQt.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtWidgets import (
-    QShortcut, QWidget, QLabel, QDialog, QComboBox
+    QAction, QToolBar,
+    QDialog
 )
-from qgis.PyQt import uic
-from qgis.PyQt.QtWidgets import QFileDialog
-from qgis.core import QgsSettings
+from qgis.core import (
+    Qgis, QgsApplication, QgsVectorLayer, QgsProject, 
+    QgsNetworkAccessManager, QgsSettings
+)
+
 from . import encoding
 from os import path
 import re
@@ -47,7 +45,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 
-from .constants import REP, GUGIK, PARAMS, EPSG
+from .constants import REP, GUGIK, EPSG
 from . import PLUGIN_NAME, PLUGIN_VERSION
 from .utils import QgsTools
 

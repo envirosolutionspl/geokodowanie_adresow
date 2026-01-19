@@ -1,6 +1,4 @@
 from qgis._core import QgsMessageLog, Qgis
-from qgis.PyQt.QtWidgets import QMessageBox
-from qgis.PyQt.QtGui import QIcon
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from qgis.PyQt.QtCore import QEventLoop
 from qgis.PyQt.QtWidgets import QDialog

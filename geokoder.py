@@ -1,6 +1,7 @@
 import json
-from qgis.PyQt.QtCore import QUrl, QUrlQuery, QEventLoop
+from qgis.PyQt.QtCore import QUrl, QUrlQuery, QEventLoop, pyqtSignal
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
+from qgis.PyQt.QtWidgets import QDialog
 from qgis.core import QgsNetworkAccessManager
 from qgis.core import (
     Qgis,
@@ -10,10 +11,8 @@ from qgis.core import (
     QgsTask,
     QgsWkbTypes
     )
-from qgis.PyQt.QtCore import QObject, pyqtSignal
 from .utils import QgsTools
 from .constants import GUGIK, PARAMS
-from qgis.PyQt.QtWidgets import QDialog
 
 if not hasattr(QDialog, 'exec'):
     QDialog.exec = QDialog.exec_
