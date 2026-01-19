@@ -11,6 +11,9 @@ plugins_dir = os.path.dirname(plugin_dir)
 sys.path.insert(0, plugins_dir)
 
 from geokodowanie_adresow.geokodowanie_adresow import GeokodowanieAdresow
+from geokodowanie_adresow.utils import NetworkTools
+from geokodowanie_adresow.constants import CSV_URL
+from geokodowanie_adresow import PLUGIN_NAME
 from qgis.core import (
     QgsApplication,
     QgsNetworkAccessManager,
@@ -19,7 +22,8 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QUrl, QEventLoop
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from unittest.mock import MagicMock, patch
-from constants import CSV_URL
+
+NetworkTools.patchQtCompatibility()
 
 # --- MOCKI POMOCNICZE ---
 class MockMessageBar:
@@ -48,26 +52,17 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         cls.qgs.exitQgis()
 
     def setUp(self):
+        self.network_manager = QgsNetworkAccessManager.instance()
         self.mock_iface = MockIface()
         self.temp_csv_path = os.path.join(
-            os.path.dirname(__file__), 'temp_downloaded_data.csv'
+            current_dir, 'temp_downloaded_data.csv'
+        )
+        self.temp_output_path = os.path.join(
+            current_dir, 'temp_output.txt'
         )
         
-        patch_path_settings = 'geokodowanie_adresow.geokodowanie_adresow.QSettings'
-        
-        # QgisFeed jest importowane wewnątrz __init__ z pliku qgis_feed.py.
-        # Musimy zpatchować oryginał w module 'qgis_feed', 
-        # aby import wewnątrz __init__ pobrał Mocka.
-        patch_path_feed = 'geokodowanie_adresow.qgis_feed.QgisFeed'
-        
-        with patch(patch_path_settings) as MockQSettings, \
-             patch(patch_path_feed) as MockFeed:
-            # Konfigurujemy QSettings
-            mock_settings_instance = MockQSettings.return_value
-            mock_settings_instance.value.return_value = 'pl_PL'
-            
-            # Tworzymy instancję wtyczki
-            self.plugin = GeokodowanieAdresow(self.mock_iface)
+        # Tworzymy instancję wtyczki
+        self.plugin = GeokodowanieAdresow(self.mock_iface, is_tested=True)
 
         self.plugin.taskManager = MagicMock()
         self.plugin.dlg = MagicMock()
@@ -78,27 +73,30 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
                 os.remove(self.temp_csv_path)
             except PermissionError:
                 pass
-        if hasattr(self, 'plugin') and hasattr(self.plugin, 'outputPlik'):
-            if os.path.exists(self.plugin.outputPlik):
-                try:
-                    os.remove(self.plugin.outputPlik)
-                except PermissionError:
-                    pass
+        if os.path.exists(self.temp_output_path):
+            try:
+                os.remove(self.temp_output_path)
+            except PermissionError:
+                pass
 
     def downloadCsv(self):
         """
         Pobieranie pliku przez QgsNetworkAccessManager 
         (zgodnie z uwagami recenzenta)
         """
-        manager = QgsNetworkAccessManager.instance()
         request = QNetworkRequest(QUrl(CSV_URL))
         
         loop = QEventLoop()
-        reply = manager.get(request)
+        reply = self.network_manager.get(request)
         reply.finished.connect(loop.quit)
-        loop.exec_()
-
-        if reply.error() != QNetworkReply.NoError:
+        loop.exec()
+        error_val = reply.error()
+        
+        request.setHeader(
+            NetworkTools.getUAHeader(), f"QGIS-Test-{PLUGIN_NAME}"
+        )
+        
+        if reply.error() != NetworkTools.getNetworkNoError():
             self.fail(f"Błąd pobierania pliku: {reply.errorString()}")
 
         content = reply.readAll()
@@ -115,14 +113,10 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         self.downloadCsv()
         
         # Konfigurowanie wtyczki
-        self.plugin.inputPlik = self.temp_csv_path
-        self.plugin.outputPlik = os.path.join(
-            os.path.dirname(__file__), 'temp_output.txt'
-        )
         self.plugin.delimeter = ','
 
-        # MOCKOWANIE
-        self.plugin.dlg = MagicMock()
+        self.plugin.dlg.qfwInputFile.filePath.return_value = self.temp_csv_path
+        self.plugin.dlg.qfwOutputFile.filePath.return_value = self.temp_output_path
         
         # Konfigurujemy odpowiedzi Mocka na pytania o wybrane indeksy 
         # w ComboBoxach.
@@ -193,3 +187,6 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+

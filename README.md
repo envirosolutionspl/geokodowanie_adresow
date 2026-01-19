@@ -19,7 +19,7 @@ Wtyczka QGIS, która umożliwia lokalizację przestrzenną wybranego punktu adre
 * W zależności od liczby punktów do geokodowania, proces może zająć pewien czas. W takim przypadku wtyczkę można zminimalizować, naciskając przycisk "Zamknij". Proces będzie kontynuowany w tle.
 * Proces geokodowania można zatrzymać. W tym celu należy kliknąć na niebieski pasek na dole z prawej strony, wybrać proces "geokodowanie" oraz nacisnąć na pojawiający się krzyżyk.
 
-![geokodowanie_gif_720](https://github.com/user-attachments/assets/b0ca89c2-faab-43e6-bec8-26197de820ab)
+![geokodowanie_gif_720](./docs/przyklad_uzycia_geokodowanie.gif)
 
 ### Uwaga:
 * Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.28.1 lub wyższej.
