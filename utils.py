@@ -4,7 +4,7 @@ from qgis.PyQt.QtCore import QEventLoop
 from qgis.PyQt.QtWidgets import QDialog
 from . import PLUGIN_NAME
 
-class QgsTools:
+class NotifyTools:
 
     def __init__(self, iface):
         self.iface = iface
@@ -56,6 +56,8 @@ class QgsTools:
     def pushLogSuccess(message: str) -> None:
         QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.Success)
 
+
+class NetworkTools:
     # --- HELPERY DLA Qt5 / Qt6 ---
 
     @staticmethod
@@ -86,3 +88,4 @@ class QgsTools:
         for cls in classes_to_patch:
             if not hasattr(cls, 'exec'):
                 cls.exec = cls.exec_
+

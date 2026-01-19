@@ -11,7 +11,7 @@ from qgis.core import (
     QgsTask,
     QgsWkbTypes
     )
-from .utils import QgsTools
+from .utils import NotifyTools
 from .constants import GUGIK, PARAMS
 
 if not hasattr(QDialog, 'exec'):
@@ -23,7 +23,7 @@ class Geokodowanie(QgsTask):
     def __init__(self, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
         super().__init__("Geokodowanie", QgsTask.CanCancel)
         self.iface = iface
-        self.qgs_tools = QgsTools(self.iface)
+        self.notify_tools = NotifyTools(self.iface)
         self.rekordy = rekordy
         self.miejscowosci = miejscowosci
         self.ulicy = ulicy
@@ -52,7 +52,7 @@ class Geokodowanie(QgsTask):
         total = len(self.rekordy)
         unique_geometries = set()  # Zbiór do przechowywania unikalnych geometrii jako WKT string
 
-        self.qgs_tools.pushLogInfo("Rozpoczęto proces geokodowania.")
+        self.notify_tools.pushLogInfo("Rozpoczęto proces geokodowania.")
 
         for i, rekord in enumerate(self.rekordy):
             self.kilka = []
@@ -79,8 +79,8 @@ class Geokodowanie(QgsTask):
                     f"{self.miejscowosci[i]} {self.ulicy[i]} "
                     f"{self.numery[i]} {self.kody[i]}\n"
                 )
-                self.qgs_tools.pushLogWarning(msg)
-                self.qgs_tools.pushWarning(msg)
+                self.notify_tools.pushLogWarning(msg)
+                self.notify_tools.pushWarning(msg)
             else:
                 # Jeśli wynik geokodowania jest listą geometrii,
                 # przetwórz każdą geometrię osobno
@@ -105,8 +105,8 @@ class Geokodowanie(QgsTask):
             if self.isCanceled():
                 self.stop = True
                 msg = "Geokodowanie zostało anulowane"
-                self.qgs_tools.pushLogWarning(msg)
-                self.qgs_tools.pushWarning(msg)
+                self.notify_tools.pushLogWarning(msg)
+                self.notify_tools.pushWarning(msg)
                 return False
             
         self.finishedProcessing.emit(
@@ -152,7 +152,7 @@ class Geokodowanie(QgsTask):
         msg = (
             f"Geokodowanie adresu {params}"
         )
-        self.qgs_tools.pushLogInfo(msg)
+        self.notify_tools.pushLogInfo(msg)
 
         loop = QEventLoop()
         reply.finished.connect(loop.quit)
@@ -164,8 +164,8 @@ class Geokodowanie(QgsTask):
                 msg = (
                     f"Nie udało się połączyć z usługą API."
                 )
-                self.qgs_tools.pushLogWarning(msg)
-                self.qgs_tools.pushWarning(msg)
+                self.notify_tools.pushLogWarning(msg)
+                self.notify_tools.pushWarning(msg)
                 return None
 
             response_bytes = reply.readAll().data()
@@ -186,8 +186,8 @@ class Geokodowanie(QgsTask):
                 msg = (
                     f"Nie udało się znaleźć geokodowania adresu."
                 )
-                self.qgs_tools.pushLogWarning(msg)
-                self.qgs_tools.pushWarning(msg)
+                self.notify_tools.pushLogWarning(msg)
+                self.notify_tools.pushWarning(msg)
                 return None
 
             # ZWRACAMY WKT
@@ -197,8 +197,8 @@ class Geokodowanie(QgsTask):
             msg = (
                 f"Nie udało się znaleźć geokodowania adresu."
             )
-            self.qgs_tools.pushLogWarning(msg)
-            self.qgs_tools.pushWarning(msg)
+            self.notify_tools.pushLogWarning(msg)
+            self.notify_tools.pushWarning(msg)
             return None
         finally:
             reply.deleteLater()
@@ -208,8 +208,8 @@ class Geokodowanie(QgsTask):
             msg = (
                 f"Geokodowanie  nie powiodło się."
             )
-            self.qgs_tools.pushWarning(msg)
-            self.qgs_tools.pushLogWarning(msg)
+            self.notify_tools.pushWarning(msg)
+            self.notify_tools.pushLogWarning(msg)
             self.finishedProcessing.emit(
                 self.featuresPoint, 
                 self.featuresLine, 

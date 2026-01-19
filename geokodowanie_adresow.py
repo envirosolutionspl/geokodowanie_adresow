@@ -47,16 +47,17 @@ from .geokoder import Geokodowanie
 
 from .constants import REP, GUGIK, EPSG
 from . import PLUGIN_NAME, PLUGIN_VERSION
-from .utils import QgsTools
+from .utils import NetworkTools, NotifyTools
 
-QgsTools.patchQtCompatibility()
+NetworkTools.patchQtCompatibility()
 
 class GeokodowanieAdresow:
 
     def __init__(self, iface):
         self.settings = QgsSettings() 
         self.iface = iface
-        self.qgs_tools = QgsTools(self.iface)
+        self.notify_tools = NotifyTools(self.iface)
+        self.network_toolkit = NetworkTools()
 
         if Qgis.QGIS_VERSION_INT >= 31000:
             from .qgis_feed import QgisFeed
@@ -202,7 +203,7 @@ class GeokodowanieAdresow:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.first_start = True
-        self.qgs_tools.pushLogInfo(f"Wtyczka {PLUGIN_NAME} została zainicjalizowana poprawnie")
+        self.notify_tools.pushLogInfo(f"Wtyczka {PLUGIN_NAME} została zainicjalizowana poprawnie")
 
     def unload(self):
         """Usuwa elementy menu i ikony paska narzędzi z interfejsu QGIS."""
@@ -247,8 +248,8 @@ class GeokodowanieAdresow:
         connection = self.checkInternetConnection()
         if not connection:
             msg = f"Brak połączenia z internetem lub usługa GUGiK jest niedostępna."
-            self.qgs_tools.pushWarning(msg) 
-            self.qgs_tools.pushLogWarning(msg)
+            self.notify_tools.pushWarning(msg) 
+            self.notify_tools.pushLogWarning(msg)
             return
 
         self.taskManager.cancelAll()
@@ -323,8 +324,8 @@ class GeokodowanieAdresow:
                         "Błąd kodowania: Nie udało się zastosować wybranego"
                         " kodowania do pliku z adresami. Spróbuj innego kodowania."
                     )
-                    self.qgs_tools.pushWarning(msg)
-                    self.qgs_tools.pushLogWarning(msg)
+                    self.notify_tools.pushWarning(msg)
+                    self.notify_tools.pushLogWarning(msg)
                     return False
 
                 elementyNaglowkow = naglowki.split(self.delimeter)
@@ -335,7 +336,7 @@ class GeokodowanieAdresow:
                 self.dlg.cbxNumer.addItems(elementyNaglowkow)
                 self.dlg.cbxKod.addItems(elementyNaglowkow)
 
-                self.qgs_tools.pushLogInfo(
+                self.notify_tools.pushLogInfo(
                     f"Czytanie nagłówków: {elementyNaglowkow}"
                 )
                 
@@ -365,7 +366,7 @@ class GeokodowanieAdresow:
                     "Błąd wczytywania pliku: błąd w wierszu nr"
                     f"{rekordy.index(rekord)}: {rekord}"
                 )
-                self.qgs_tools.pushCritical(msg)
+                self.notify_tools.pushCritical(msg)
                 return False
         return True
 
@@ -423,7 +424,7 @@ class GeokodowanieAdresow:
             f"Plik wejściowy {self.inputPlik},"
             f" Plik wyjściowy {self.outputPlik}."
         )
-        self.qgs_tools.pushLogInfo(msg)
+        self.notify_tools.pushLogInfo(msg)
         #
         idMiejscowosc = self.dlg.cbxMiejscowosc.currentIndex()
         idUlica = self.dlg.cbxUlica.currentIndex()
@@ -435,18 +436,18 @@ class GeokodowanieAdresow:
             f"Miasto: {idMiejscowosc}, Ulica: {idUlica}, "
             f"Numer: {idNumer}, Kod: {idKod}"
         )
-        self.qgs_tools.pushLogInfo(msg)
+        self.notify_tools.pushLogInfo(msg)
 
         # Sprawdza, czy co najmniej jeden atrybut jest wybrany
         if not idMiejscowosc and not idUlica and not idNumer and not idKod:
             # Informuje użytkownika, że nie wybrano żadnych atrybutów
             msg = "Nie wybrano żadnych atrybutów."
-            self.qgs_tools.pushWarning(msg)
+            self.notify_tools.pushWarning(msg)
             return
         # Sprawdza, czy wybrano miejscowość, jeśli nie, informuje użytkownika
         elif not idMiejscowosc:
             msg = f"Nie wybrano miejscowości."
-            self.qgs_tools.pushMessage(msg) 
+            self.notify_tools.pushMessage(msg) 
         else:
             miejscowosci = []
             ulicy = []
@@ -485,8 +486,8 @@ class GeokodowanieAdresow:
                 # sprawdzenie czy plik CSV jest poprawny
                 if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer, idKod):
                     msg = "Plik CSV jest niepoprawny"
-                    self.qgs_tools.pushLogWarning(msg)
-                    self.qgs_tools.pushWarning(msg)
+                    self.notify_tools.pushLogWarning(msg)
+                    self.notify_tools.pushWarning(msg)
                     return False
                 
                 for rekord in self.rekordy:
@@ -511,8 +512,8 @@ class GeokodowanieAdresow:
 
                     except Exception as e:
                         msg  = f"Błąd przetwarzania rekordu {str(e)}"
-                        self.qgs_tools.pushCritical(msg)
-                        self.qgs_tools.pushLogCritical(msg)
+                        self.notify_tools.pushCritical(msg)
+                        self.notify_tools.pushLogCritical(msg)
                         continue
 
                 # Tworzy obiekt geokodowania do menedżera zadań.
@@ -619,7 +620,7 @@ class GeokodowanieAdresow:
         )
         iloscRekordow = len(self.rekordy)
         
-        self.qgs_tools.pushLogInfo(
+        self.notify_tools.pushLogInfo(
             f"Geokodowanie zakończone. Przetworzono: {iloscRekordow} rekordów. "
             f"Zgeokodowano: {iloscZgeokodowanych}."
         )
@@ -632,7 +633,7 @@ class GeokodowanieAdresow:
                 " Błędnie zgeokodowane adresy zostały zapisane w "
                 f"pliku {self.outputPlik}."
             )
-            self.qgs_tools.pushMessage(msg)        
+            self.notify_tools.pushMessage(msg)        
         # Wyświetlenie komunikatu, jeśli są błędne adresy lub żaden adres nie został zgeokodowany
         elif bledne or iloscZgeokodowanych == 0:
             iloscBledow = len(bledne)
@@ -645,7 +646,7 @@ class GeokodowanieAdresow:
                 f"Zgeokodowano {iloscZgeokodowanych}/{iloscRekordow}. "
                 f"Pozostałe zostały zapisane w pliku {self.outputPlik}."
             )
-            self.qgs_tools.pushMessage(msg)
+            self.notify_tools.pushMessage(msg)
         
         # Wyświetlenie komunikatu, jeśli liczba zgeokodowanych adresów jest większa niż liczba rekordów
         elif iloscZgeokodowanych > iloscRekordow:
@@ -655,7 +656,7 @@ class GeokodowanieAdresow:
                 "Dla niektórych adresów usługa geokodowania zwróciła "
                 "kilka wartości."
             )
-            self.qgs_tools.pushSuccess(msg)
+            self.notify_tools.pushSuccess(msg)
         
         # Wyświetlenie komunikatu, jeśli wszystkie adresy zostały poprawnie zgeokodowane
         elif not bledne:
@@ -663,7 +664,7 @@ class GeokodowanieAdresow:
                 "Wynik geokodowania:"
                 f"Zgeokodowano wszystkie {iloscZgeokodowanych} adresów"
             )
-            self.qgs_tools.pushSuccess(msg)
+            self.notify_tools.pushSuccess(msg)
       
     def checkInternetConnection(self):
         """
@@ -681,7 +682,7 @@ class GeokodowanieAdresow:
             request = QNetworkRequest(QUrl(GUGIK))
 
             request.setHeader(
-                QgsTools.getUAHeader(), 
+                self.network_toolkit.getUAHeader(), 
                 f"QGIS-Plugin-{PLUGIN_NAME}"
             )
 
@@ -697,29 +698,29 @@ class GeokodowanieAdresow:
             if not timer.isActive():
                 reply.abort()
                 msg = "Nie otrzymano na czas odpowiedzi z GUGIK - Timeout."
-                self.qgs_tools.pushWarning(msg)
-                self.qgs_tools.pushLogWarning(msg)
+                self.notify_tools.pushWarning(msg)
+                self.notify_tools.pushLogWarning(msg)
                 return False
 
             timer.stop()
 
-            if reply.error() == QgsTools.getNetworkNoError():
-                status = reply.attribute(QgsTools.getHttpStatusAttr())
+            if reply.error() == self.network_toolkit.getNetworkNoError():
+                status = reply.attribute(self.network_toolkit.getHttpStatusAttr())
                 if status in (200, 301, 302):
                     return True
                 msg = f"Nie połączono się z serwisem. Kod błędu: {status}"
-                self.qgs_tools.pushWarning(msg)
-                self.qgs_tools.pushLogWarning(msg)
+                self.notify_tools.pushWarning(msg)
+                self.notify_tools.pushLogWarning(msg)
             else:
                 msg = f"Problem z połączeniem do serwera GUGIK. Błąd: {reply.errorString()}"
-                self.qgs_tools.pushCritical(msg)
-                self.qgs_tools.pushLogCritical(msg) 
+                self.notify_tools.pushCritical(msg)
+                self.notify_tools.pushLogCritical(msg) 
 
             return False
         
         except Exception as e:
             msg = f"Nieznany problem z połączeniem: {str(e)}"
-            self.qgs_tools.pushCritical(msg)
-            self.qgs_tools.pushLogCritical(msg) 
+            self.notify_tools.pushCritical(msg)
+            self.notify_tools.pushLogCritical(msg) 
             return False
 
