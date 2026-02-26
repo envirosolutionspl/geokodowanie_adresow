@@ -19,10 +19,15 @@ Wtyczka QGIS, która umożliwia lokalizację przestrzenną wybranego punktu adre
 * W zależności od liczby punktów do geokodowania, proces może zająć pewien czas. W takim przypadku wtyczkę można zminimalizować, naciskając przycisk "Zamknij". Proces będzie kontynuowany w tle.
 * Proces geokodowania można zatrzymać. W tym celu należy kliknąć na niebieski pasek na dole z prawej strony, wybrać proces "geokodowanie" oraz nacisnąć na pojawiający się krzyżyk.
 
+![geokodowanie_gif_720](./docs/przyklad_uzycia_geokodowanie.gif)
+
 ### Uwaga:
-* Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.22 lub wyższej.
+* Warunkiem koniecznym do prawidłowego działania wtyczki jest posiadanie wersji QGIS 3.28.1 lub wyższej.
 * Dla niektórych adresów brak jest kodów pocztowych w bazie GUGiK. Należy wtedy użyć 00-000 lub wartości pustej.
 * Jeśli usługa zwróci kilka punktów adresowych, wszystkie zostaną dodane do warstw wynikowych.
+
+### Dane testowe do geokodowania
+Przykładowe dane do testowania znajdują się pod linkiem https://downloads.envirosolutions.pl/sample-data.csv [dostęp 2025-12-10]
 
 ## EN
 
@@ -43,16 +48,12 @@ The QGIS plugin allows for the spatial location of a selected address point, str
 * Depending on the number of points to be geocoded, the process may take some time. In such a case, the plugin can be minimized by pressing the "Zamknij" button. The process will continue in the background.
 * The geocoding process can be stopped. To do this, click on the blue bar at the bottom right, select the "geokodowanie" process, and click on the appearing cross.
 
+![geokodowanie_gif_720](./docs/przyklad_uzycia_geokodowanie.gif)
+
 ### Note:
-* A necessary condition for the proper functioning of the plugin is having QGIS version 3.22 or higher.
+* A necessary condition for the proper functioning of the plugin is having QGIS version 3.28.1 or higher.
 * For some addresses, postal codes are missing in the GUGiK database. In such cases, use 00-000 or leave the value empty.
 * If the service returns multiple address points, all of them will be added to the result layers.
 
-#### Sample geocoding input file/  Przykładowy plik do geokodowania:
-```
-miasto,ulica,kod,numer
-Warszawa, Szeligowska, 01-320, 32A
-Marki, Andersa,, 1
-Słupno, Lipowa, 09-472, 4
-Słupno, Lipowa, 05-250, 4
-```
+### Sample geocoding input file
+Sample data for geocoding can be found at the link https://downloads.envirosolutions.pl/sample-data.csv [access 2025-12-10]

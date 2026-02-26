@@ -12,7 +12,9 @@ from .constants import INDUSTRIES, FEED_URL
 
 
 class QgisFeed:
-    def __init__(self, selected_industry, plugin_name):
+    def __init__(self, parent, selected_industry, plugin_name):
+        self.parent = parent
+        self.notify_tools = self.parent.notify_tools
         self.s = QgsSettings()
         self.industries_dict = INDUSTRIES
 
@@ -56,7 +58,7 @@ class QgisFeed:
         """
         Function registers QGIS Feed
         """
-        QgsMessageLog.logMessage('Registering feed')
+        self.notify_tools.pushLogInfo("Zarejestrowano QGIS Feed")
         for key in self.s.allKeys():
             if self.envirosolutionsFeedPattern_old.match(key) or self.envirosolutionsFeedPattern_new.match(key):
                 finalKey = re.sub(r'(\d+)', r'9999\1', key.replace(self.industry_url_short, 'httpsfeedqgisorg'))
