@@ -48,6 +48,8 @@ The QGIS plugin allows for the spatial location of a selected address point, str
 * Depending on the number of points to be geocoded, the process may take some time. In such a case, the plugin can be minimized by pressing the "Zamknij" button. The process will continue in the background.
 * The geocoding process can be stopped. To do this, click on the blue bar at the bottom right, select the "geokodowanie" process, and click on the appearing cross.
 
+![geokodowanie_gif_720](./docs/przyklad_uzycia_geokodowanie.gif)
+
 ### Note:
 * A necessary condition for the proper functioning of the plugin is having QGIS version 3.28.1 or higher.
 * For some addresses, postal codes are missing in the GUGiK database. In such cases, use 00-000 or leave the value empty.
