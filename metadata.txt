@@ -22,10 +22,12 @@ repository=https://github.com/envirosolutionspl/geokodowanie_uug
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
-  Wersja 1.3.0
-  * Dostosowanie wtyczki do QGIS 4
-  * Zmiana minimalnej wersji QGIS na 3.28
-  * Zmiana lokalziacji przycisków do geokodowania w UI
+  Wersja 1.3.1
+  * Dodanie informacji o qgisMaximumVersion
+#  Wersja 1.3.0
+#  * Dostosowanie wtyczki do QGIS 4
+#  * Zmiana minimalnej wersji QGIS na 3.28
+#  * Zmiana lokalziacji przycisków do geokodowania w UI
 #  Wersja 1.2.4
 #  * Aktualizacja stopki wtyczki
 #  * Tymczasowe usunięcie sprawdzenia łącza internetowego
