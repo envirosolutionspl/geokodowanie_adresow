@@ -29,6 +29,10 @@ Wtyczka QGIS, która umożliwia lokalizację przestrzenną wybranego punktu adre
 ### Dane testowe do geokodowania
 Przykładowe dane do testowania znajdują się pod linkiem https://downloads.envirosolutions.pl/sample-data.csv [dostęp 2025-12-10]
 
+## Kontakt
+
+Wtyczka została stworzona przez ****EnviroSolutions**. W razie pytań lub potrzeby wsparcia skontaktuj się z nami przez e-mail:** **[gis@envirosolutions.pl](mailto:gis@envirosolutions.pl)**.
+
 ## EN
 
 The QGIS plugin allows for the spatial location of a selected address point, street, or locality. Data retrieval is carried out through the UUG service provided by the Head Office of Geodesy and Cartography. It supports CSV files. The file may (but does not have to) contain headers.
@@ -57,3 +61,7 @@ The QGIS plugin allows for the spatial location of a selected address point, str
 
 ### Sample geocoding input file
 Sample data for geocoding can be found at the link https://downloads.envirosolutions.pl/sample-data.csv [access 2025-12-10]
+
+## Contact
+
+The plugin was developed by ****EnviroSolutions**. For questions or support, contact us at:** **[gis@envirosolutions.pl](mailto:gis@envirosolutions.pl)**.
