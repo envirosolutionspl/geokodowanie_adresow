@@ -31,8 +31,124 @@ FORM_CLASS, _ = uic.loadUiType(os.path.join(
     os.path.dirname(__file__), 'geokodowanie_adresow_dialog_base.ui'))
 
 
+    def __init__(self):
+        super().__init__(None, Qt.WindowType.Widget)
+
 class GeokodowanieAdresowDialog(QtWidgets.QDialog, FORM_CLASS):
+    closeRequested = pyqtSignal()
+
     def __init__(self, parent=None):
         """Constructor."""
         super(GeokodowanieAdresowDialog, self).__init__(parent)
         self.setupUi(self)
+        px = QPixmap(16,16)
+        px.fill(Qt.GlobalColor.transparent)
+        self.setWindowIcon(QIcon(px))
+        self.headerContainer = None
+        self._theme = None
+        self._applyTheme()
+        self.btn_help.clicked.connect(self._openHelp)
+        self.btn_close.clicked.connect(self.reject)
+
+        self.qfwInputFile.fileChanged.connect(self.updateStatus)
+        self.qfwOutputFile.fileChanged.connect(self.updateStatus)
+        for cbx in (self.cbxMiejscowosc, self.cbxUlica, self.cbxNumer, self.cbxKod):
+            cbx.currentTextChanged.connect(self.updateStatus)
+
+        self.updateStatus()
+
+    def _applyTheme(self, force=False):
+        theme = 'dark' if ThemeUtils.isDarkTheme() else 'light'
+        if theme == self._theme and not force:
+            return
+        self._theme = theme
+        # kolory sa w arkuszu stylow ui/geokodowanie_adresow_dialog_base.ui
+        self.setProperty('theme', theme)
+        ThemeUtils.repolishAll(self)
+        if self.headerContainer is not None:
+            self.headerContainer.setProperty('theme', theme)
+            ThemeUtils.repolishAll(self.headerContainer)
+        color = FOOTER_LINK_COLORS[theme]
+        for lbl in (self.lbl_email_2, self.lbl_szkolenia_2):
+            lbl.setText(re.sub(r'color:\s*#[0-9a-fA-F]{3,8}', 'color:%s' % color, lbl.text()))
+        for name, filename in THEME_ICONS.items():
+            getattr(self, name).setIcon(
+                ThemeUtils.themedIcon(os.path.join(PLUGIN_DIR, 'images', theme, filename))
+            )
+        self._setFooterLogo()
+
+    def _setFooterLogo(self, height=30):
+        if self._theme is not None:
+            ThemeUtils.setLogo(self.label_6, FOOTER_LOGOS[self._theme], height)
+
+    def showEvent(self, event):
+        self._applyTheme()
+        super().showEvent(event)
+        # dopiero po pokazaniu znana jest skala ekranu, inaczej logo jest rozpikselowane
+        self._setFooterLogo()
+
+    def changeEvent(self, event):
+        # changeEvent przychodzi juz w trakcie setupUi, wtedy _theme jeszcze nie istnieje
+        if (event.type() in (QEvent.Type.PaletteChange, QEvent.Type.StyleChange)
+                and getattr(self, '_theme', None) is not None):
+            self._applyTheme()
+        super().changeEvent(event)
+
+    def setStatus(self, msg, state="info"):
+        """
+        Ustawia tekst i kolor (ok / info) etykiety statusu.
+        """
+        self.lbl_status.setText(msg)
+        self.lbl_status.setProperty("state", state)
+        style = self.lbl_status.style()
+        style.unpolish(self.lbl_status)
+        style.polish(self.lbl_status)
+        self.lbl_status.update()
+
+    def updateStatus(self, *args):
+        csvPath = self.qfwInputFile.filePath().strip()
+        txtPath = self.qfwOutputFile.filePath().strip()
+
+        if not csvPath and not txtPath:
+            msg, state = "Wskaż oba pliki, aby rozpocząć.", "info"
+        elif not csvPath:
+            msg, state = "Wskaż plik CSV z adresami.", "info"
+        elif not txtPath:
+            msg, state = "Wskaż plik na niezgeokodowane adresy.", "info"
+        elif not self.cbxMiejscowosc.currentText().strip():
+            msg, state = "Wskaż kolumnę z miejscowością.", "info"
+        else:
+            msg, state = "Gotowe do geokodowania.", "ok"
+
+        self.setStatus(msg, state)
+        self.btnGeokoduj.setEnabled(state == "ok")
+    
+    def _openHelp(self):
+        url = self._readHomepage() or HOME_LINK
+        QDesktopServices.openUrl(QUrl(url))
+
+    def reject(self):
+        self.closeRequested.emit()
+
+    def takeHeader(self):
+        """Wyjmuje nagłówek z formularza do osobnego kontenera."""
+        self.mainLayout.removeWidget(self.headerFrame)
+        container = DockHeader()
+        container.setStyleSheet(self.styleSheet())
+        container.setProperty('theme', self._theme)
+        layout = QtWidgets.QVBoxLayout(container)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(self.headerFrame)
+        ThemeUtils.repolishAll(container)
+        self.headerContainer = container
+        return container
+
+    @staticmethod
+    def _readHomepage():
+        parser = configparser.ConfigParser(interpolation=None)
+        try:
+            parser.read(os.path.join(PLUGIN_DIR, 'metadata.txt'), encoding='utf-8')
+            return parser.get('general', 'homepage', fallback='')
+        except Exception:
+            return ''
