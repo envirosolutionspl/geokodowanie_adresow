@@ -23,13 +23,25 @@
 """
 
 import os
+import re
+import configparser
 
 from qgis.PyQt import uic
 from qgis.PyQt import QtWidgets
+from qgis.PyQt.QtCore import QDir, QEvent, QUrl, Qt, pyqtSignal
+from qgis.PyQt.QtGui import QDesktopServices, QIcon, QPixmap
 
-FORM_CLASS, _ = uic.loadUiType(os.path.join(
-    os.path.dirname(__file__), 'geokodowanie_adresow_dialog_base.ui'))
+from .constants import FOOTER_LINK_COLORS, FOOTER_LOGOS, THEME_ICONS, HOME_LINK
+from .utils import ThemeUtils
 
+PLUGIN_DIR = os.path.dirname(__file__)
+
+FORM_CLASS, _ = uic.loadUiType(os.path.join(PLUGIN_DIR, 'ui', 'geokodowanie_adresow_dialog_base.ui'))
+QDir.addSearchPath('geokodowanieimg', os.path.join(PLUGIN_DIR, 'images'))
+
+
+class DockHeader(QtWidgets.QDialog):
+    """Kontener nagłówka wtyczki, używany jako pasek tytułu panelu dokowanego."""
 
     def __init__(self):
         super().__init__(None, Qt.WindowType.Widget)
