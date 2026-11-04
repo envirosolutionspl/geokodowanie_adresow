@@ -28,7 +28,7 @@ from qgis.PyQt.QtCore import (
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtWidgets import (
-    QAction, QToolBar, QDialog, QScrollArea, QFrame
+    QAction, QToolBar, QScrollArea, QFrame
 )
 from qgis.core import (
     Qgis, QgsApplication, QgsVectorLayer, QgsProject, 
@@ -45,7 +45,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 
-from .constants import REP, GUGIK, EPSG, DESCRIPTION_LABEL
+from .constants import REP, GUGIK, EPSG, DESCRIPTION_LABEL, INDUSTRIES
 from . import PLUGIN_NAME, PLUGIN_VERSION
 from .utils import NetworkTools, NotifyTools
 
@@ -64,9 +64,12 @@ class GeokodowanieAdresow:
         if not is_tested: 
             if Qgis.QGIS_VERSION_INT >= 31000:
                 from .qgis_feed import QgisFeed
-                self.selected_industry = self.settings.value("selected_industry", 
-                    None)
+                self.selected_industry = self.settings.value("selected_industry", None)
                 show_dialog = self.settings.value("showDialog", True, type=bool)
+
+                if self.selected_industry not in INDUSTRIES.values():
+                    self.selected_industry = None
+                    show_dialog = True
 
                 if self.selected_industry is None and show_dialog:
                     self.showBranchSelectionDialog()
@@ -341,13 +344,14 @@ class GeokodowanieAdresow:
             self.dlg.show()
 
     def showBranchSelectionDialog(self):
-        self.qgisfeed_dialog = QgisFeedDialog()
+        """Wyświetla dialog wyboru branży dla QGIS Feed."""
+        dialog = QgisFeedDialog(self.iface.mainWindow())
+        dialog.exec()
 
-        if self.qgisfeed_dialog.exec() == QDialog.DialogCode.Accepted:
-            self.selected_branch = self.qgisfeed_dialog.comboBox.currentText()
-            self.settings.setValue("selected_industry", self.selected_branch, 
-                QgsSettings.NoSection)
-            self.settings.setValue("showDialog", False, QgsSettings.NoSection)
+        self.selected_branch = self.settings.value("selected_industry", None)
+
+        if self.selected_branch in INDUSTRIES.values():
+            self.settings.setValue("showDialog", False)
             self.settings.sync()
 
     def openInputFile(self):
