@@ -32,7 +32,7 @@ from qgis.PyQt.QtWidgets import (
 )
 from qgis.core import (
     Qgis, QgsApplication, QgsVectorLayer, QgsProject, 
-    QgsNetworkAccessManager, QgsSettings
+    QgsNetworkAccessManager, QgsSettings, QgsTask
 )
 from qgis.gui import QgsDockWidget
 
@@ -108,6 +108,7 @@ class GeokodowanieAdresow:
         self.first_start = None
         self.dock = None
         self.taskManager = QgsApplication.taskManager()
+        self.task = None
         self.project = QgsProject.instance()
 
     def tr(self, message):
@@ -221,7 +222,18 @@ class GeokodowanieAdresow:
                 action)
             self.toolbar.removeAction(action)
 
-        self.taskManager.cancelAll()
+        if self.task is not None:
+            try:
+                if self.task.status() in (
+                    QgsTask.TaskStatus.Queued,
+                    QgsTask.TaskStatus.OnHold,
+                    QgsTask.TaskStatus.Running,
+                ):
+                    self.task.cancel()
+            except RuntimeError:
+                pass
+            self.task = None
+        
         if self.dock is not None:
             self.iface.removeDockWidget(self.dock)
             self.dock.deleteLater()
@@ -602,7 +614,7 @@ class GeokodowanieAdresow:
                         continue
 
                 # Tworzy obiekt geokodowania do menedżera zadań.
-                task = Geokodowanie(
+                self.task = Geokodowanie(
                     parent = self,
                     rekordy = self.rekordy, 
                     miejscowosci = miejscowosci, 
@@ -612,9 +624,9 @@ class GeokodowanieAdresow:
                     delimeter = self.delimeter, 
                     iface = self.iface,
                 )
-                self.taskManager.addTask(task)
+                self.task.finishedProcessing.connect(self.geokodowanieSukces)
+                self.taskManager.addTask(self.task)
                 self.dlg.btnGeokoduj.setEnabled(False)
-            task.finishedProcessing.connect(self.geokodowanieSukces)
     
 
     def korektaFormatu(self, numer):
@@ -689,6 +701,7 @@ class GeokodowanieAdresow:
             stop (bool): Flaga wskazująca, czy proces geokodowania został zatrzymany.
         """
         warstwy = [self.warstwaPoint, self.warstwaLine, self.warstwaPoly]
+        self.task = None
         self.dlg.btnGeokoduj.setEnabled(True)
         self.warstwaPoint.dataProvider().addFeatures(featuresPoint)
         self.warstwaLine.dataProvider().addFeatures(featuresLine)
