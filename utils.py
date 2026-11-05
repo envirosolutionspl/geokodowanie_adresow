@@ -128,12 +128,12 @@ class ThemeUtils:
             widget.update()
 
     @staticmethod
-    def themedIcon(path, size=48, disabledOpacity=0.35):
+    def themedIcon(path, size=48, disabled_opacity=0.35):
         icon = QIcon(path)
         dimmed = QPixmap(size, size)
         dimmed.fill(Qt.GlobalColor.transparent)
         painter = QPainter(dimmed)
-        painter.setOpacity(disabledOpacity)
+        painter.setOpacity(disabled_opacity)
         painter.drawPixmap(0, 0, icon.pixmap(size, size))
         painter.end()
         icon.addPixmap(dimmed, QIcon.Mode.Disabled)

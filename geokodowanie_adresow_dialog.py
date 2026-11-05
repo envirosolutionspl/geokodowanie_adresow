@@ -32,7 +32,7 @@ from qgis.PyQt.QtCore import QDir, QEvent, QUrl, Qt, pyqtSignal
 from qgis.PyQt.QtGui import QDesktopServices, QIcon, QPixmap
 
 from .constants import FOOTER_LINK_COLORS, FOOTER_LOGOS, THEME_ICONS, HOME_LINK
-from .utils import ThemeUtils
+from .utils import ThemeUtils, NotifyTools
 
 PLUGIN_DIR = os.path.dirname(__file__)
 
@@ -56,7 +56,7 @@ class GeokodowanieAdresowDialog(QtWidgets.QDialog, FORM_CLASS):
         px = QPixmap(16,16)
         px.fill(Qt.GlobalColor.transparent)
         self.setWindowIcon(QIcon(px))
-        self.headerContainer = None
+        self.header_container = None
         self._theme = None
         self._applyTheme()
         self.btn_help.clicked.connect(self._openHelp)
@@ -77,9 +77,9 @@ class GeokodowanieAdresowDialog(QtWidgets.QDialog, FORM_CLASS):
         # kolory sa w arkuszu stylow ui/geokodowanie_adresow_dialog_base.ui
         self.setProperty('theme', theme)
         ThemeUtils.repolishAll(self)
-        if self.headerContainer is not None:
-            self.headerContainer.setProperty('theme', theme)
-            ThemeUtils.repolishAll(self.headerContainer)
+        if self.header_container is not None:
+            self.header_container.setProperty('theme', theme)
+            ThemeUtils.repolishAll(self.header_container)
         color = FOOTER_LINK_COLORS[theme]
         for lbl in (self.lbl_email_2, self.lbl_szkolenia_2):
             lbl.setText(re.sub(r'color:\s*#[0-9a-fA-F]{3,8}', 'color:%s' % color, lbl.text()))
@@ -118,14 +118,14 @@ class GeokodowanieAdresowDialog(QtWidgets.QDialog, FORM_CLASS):
         self.lbl_status.update()
 
     def updateStatus(self, *args):
-        csvPath = self.qfwInputFile.filePath().strip()
-        txtPath = self.qfwOutputFile.filePath().strip()
+        csv_path = self.qfwInputFile.filePath().strip()
+        txt_path = self.qfwOutputFile.filePath().strip()
 
-        if not csvPath and not txtPath:
+        if not csv_path and not txt_path:
             msg, state = "Wskaż oba pliki, aby rozpocząć.", "info"
-        elif not csvPath:
+        elif not csv_path:
             msg, state = "Wskaż plik CSV z adresami.", "info"
-        elif not txtPath:
+        elif not txt_path:
             msg, state = "Wskaż plik na niezgeokodowane adresy.", "info"
         elif not self.cbxMiejscowosc.currentText().strip():
             msg, state = "Wskaż kolumnę z miejscowością.", "info"
@@ -153,7 +153,7 @@ class GeokodowanieAdresowDialog(QtWidgets.QDialog, FORM_CLASS):
         layout.setSpacing(0)
         layout.addWidget(self.headerFrame)
         ThemeUtils.repolishAll(container)
-        self.headerContainer = container
+        self.header_container = container
         return container
 
     @staticmethod
@@ -162,5 +162,9 @@ class GeokodowanieAdresowDialog(QtWidgets.QDialog, FORM_CLASS):
         try:
             parser.read(os.path.join(PLUGIN_DIR, 'metadata.txt'), encoding='utf-8')
             return parser.get('general', 'homepage', fallback='')
-        except Exception:
+        except UnicodeDecodeError as e:
+            NotifyTools.pushLogWarning(f"Nie można odczytać metadata.txt - złe kodowanie (UnicodeDecodeError): {e}")
+            return ''
+        except configparser.Error as e:
+            NotifyTools.pushLogWarning(f"Błędny format metadata.txt ({type(e).__name__}): {e}")
             return ''
