@@ -231,7 +231,7 @@ class GeokodowanieAdresow:
                 ):
                     self.task.cancel()
             except RuntimeError as e:
-                self.NotifyTools.pushLogInfo(f"Zadanie geokodowania zostało już zakończone (RuntimeError): {e}.")
+                self.notify_tools.pushLogInfo(f"Zadanie geokodowania zostało już zakończone: ({e}).")
             self.task = None
         
         if self.dock is not None:
