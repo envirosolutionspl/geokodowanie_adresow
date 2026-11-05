@@ -230,8 +230,8 @@ class GeokodowanieAdresow:
                     QgsTask.TaskStatus.Running,
                 ):
                     self.task.cancel()
-            except RuntimeError:
-                pass
+            except RuntimeError as e:
+                self.NotifyTools.pushLogInfo(f"Zadanie geokodowania zostało już zakończone (RuntimeError): {e}.")
             self.task = None
         
         if self.dock is not None:
