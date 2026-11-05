@@ -23,18 +23,18 @@
 """
 
 from qgis.PyQt.QtCore import (
-    QSettings, QTranslator, QCoreApplication, QEventLoop, QTimer, QUrl
+    QSettings, QTranslator, QCoreApplication, QEventLoop, QTimer, QUrl, Qt
 )
 from qgis.PyQt.QtGui import QIcon, QPixmap
 from qgis.PyQt.QtNetwork import QNetworkRequest
 from qgis.PyQt.QtWidgets import (
-    QAction, QToolBar,
-    QDialog
+    QAction, QToolBar, QScrollArea, QFrame
 )
 from qgis.core import (
     Qgis, QgsApplication, QgsVectorLayer, QgsProject, 
-    QgsNetworkAccessManager, QgsSettings
+    QgsNetworkAccessManager, QgsSettings, QgsTask
 )
+from qgis.gui import QgsDockWidget
 
 from . import encoding
 from os import path
@@ -45,7 +45,7 @@ from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
 
-from .constants import REP, GUGIK, EPSG
+from .constants import REP, GUGIK, EPSG, DESCRIPTION_LABEL, INDUSTRIES
 from . import PLUGIN_NAME, PLUGIN_VERSION
 from .utils import NetworkTools, NotifyTools
 
@@ -64,9 +64,12 @@ class GeokodowanieAdresow:
         if not is_tested: 
             if Qgis.QGIS_VERSION_INT >= 31000:
                 from .qgis_feed import QgisFeed
-                self.selected_industry = self.settings.value("selected_industry", 
-                    None)
+                self.selected_industry = self.settings.value("selected_industry", None)
                 show_dialog = self.settings.value("showDialog", True, type=bool)
+
+                if self.selected_industry not in INDUSTRIES.values():
+                    self.selected_industry = None
+                    show_dialog = True
 
                 if self.selected_industry is None and show_dialog:
                     self.showBranchSelectionDialog()
@@ -103,7 +106,9 @@ class GeokodowanieAdresow:
                 self.toolbar.setObjectName(u'EnviroSolutions')
 
         self.first_start = None
+        self.dock = None
         self.taskManager = QgsApplication.taskManager()
+        self.task = None
         self.project = QgsProject.instance()
 
     def tr(self, message):
@@ -206,6 +211,7 @@ class GeokodowanieAdresow:
             callback=self.run,
             parent=self.iface.mainWindow())
         self.first_start = True
+        self.setupDock()
         self.notify_tools.pushLogInfo(f"Wtyczka {PLUGIN_NAME} została zainicjalizowana poprawnie")
 
     def unload(self):
@@ -216,11 +222,31 @@ class GeokodowanieAdresow:
                 action)
             self.toolbar.removeAction(action)
 
+        if self.task is not None:
+            try:
+                if self.task.status() in (
+                    QgsTask.TaskStatus.Queued,
+                    QgsTask.TaskStatus.OnHold,
+                    QgsTask.TaskStatus.Running,
+                ):
+                    self.task.cancel()
+            except RuntimeError as e:
+                self.notify_tools.pushLogInfo(f"Zadanie geokodowania zostało już zakończone: ({e}).")
+            self.task = None
+        
+        if self.dock is not None:
+            self.iface.removeDockWidget(self.dock)
+            self.dock.deleteLater()
+            self.dock = None
+
     def run(self):
         """
         Metoda run, która jest wywoływana, gdy użytkownik kliknie 
         na ikonę w pasku narzędzi.
         """
+        if self.dock is not None and self.dock.isVisible():
+            self.dock.hide()
+            return
 
         if self.first_start == True:
             self.first_start = False
@@ -244,9 +270,9 @@ class GeokodowanieAdresow:
                     'images',
                     'icon_uug.svg'
                 ))
-            )
-            self.dlg.setWindowTitle('%s %s' % (PLUGIN_NAME, PLUGIN_VERSION))
-            self.dlg.lbl_pluginVersion.setText('%s %s' % (PLUGIN_NAME, PLUGIN_VERSION))
+            ) 
+            self.dlg.setWindowTitle(" ")
+            self.dlg.lbl_pluginVersion.setText('%s %s' % (DESCRIPTION_LABEL, PLUGIN_VERSION))
         
         connection = self.checkInternetConnection()
         if not connection:
@@ -255,21 +281,89 @@ class GeokodowanieAdresow:
             self.notify_tools.pushLogWarning(msg)
             return
 
-        self.taskManager.cancelAll()
-        self.dlg.show()
-        result = self.dlg.exec()
+        self.showDock()
 
-        if result:
-            pass
+    def setupDock(self):
+        """
+        Umieszcza okno wtyczki w panelu dokowanym QGIS (domyślnie po prawej).
+        """
+        self.dlg.setWindowFlags(Qt.WindowType.Widget)
+
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll.setWidget(self.dlg)
+
+        self.dock = QgsDockWidget(self.tr(PLUGIN_NAME), self.iface.mainWindow())
+        self.dock.setObjectName('GeokodowanieAdresowDock')   
+        self.dock.setTitleBarWidget(self.dlg.takeHeader()) 
+        self.dock.setWidget(self.scroll)
+
+        self.iface.addDockWidget(Qt.DockWidgetArea.RightDockWidgetArea, self.dock)
+        self.dock.topLevelChanged.connect(self.onDockFloatingChanged)
+        self.dock.hide()
+
+        self.dlg.closeRequested.connect(self.dock.hide)
+
+    def showDock(self):
+        """
+        Pokazuje panel i dopasowuje go do rozmiaru formularza.
+        """
+        main_window = self.iface.mainWindow()
+        if self.dock.isFloating():
+            self.dock.setFloating(False)
+        self.applyDockMode()
+        self.dock.show()
+        self.dock.raise_()
+
+        form = self.dlg.sizeHint().expandedTo(self.dlg.minimumSizeHint())
+        title = self.dock.titleBarWidget()
+        header = title.sizeHint().height() if title else 0
+        screen = main_window.screen().availableGeometry()
+        scrollbar = self.scroll.verticalScrollBar().sizeHint().width()
+        width = min(form.width() + scrollbar, screen.width() // 2)
+
+        area = main_window.dockWidgetArea(self.dock)
+        if area in (Qt.DockWidgetArea.TopDockWidgetArea, Qt.DockWidgetArea.BottomDockWidgetArea):
+            height = min(form.height() + header, screen.height() // 2)
+            main_window.resizeDocks([self.dock], [height], Qt.Orientation.Vertical)
+            main_window.resizeDocks([self.dock], [width], Qt.Orientation.Horizontal)
+        else:
+            height = min(form.height() + header, int(screen.height() * 0.8))
+            main_window.resizeDocks([self.dock], [width], Qt.Orientation.Horizontal)
+            main_window.resizeDocks([self.dock], [height], Qt.Orientation.Vertical)
+
+    def onDockFloatingChanged(self, floating):
+        QTimer.singleShot(0, self.applyDockMode)
+
+    def applyDockMode(self):
+        if self.dock is None:
+            return
+        if self.dock.isFloating():
+            if self.dock.widget() is self.dlg:
+                return
+            self.scroll.takeWidget()
+            self.scroll.hide()
+            self.dock.setWidget(self.dlg)
+            self.dlg.show()
+            self.dock.adjustSize()   # okno dopasowane do treści
+        else:
+            if self.dock.widget() is self.scroll:
+                return
+            self.scroll.setWidget(self.dlg)
+            self.dock.setWidget(self.scroll)
+            self.scroll.show()
+            self.dlg.show()
 
     def showBranchSelectionDialog(self):
-        self.qgisfeed_dialog = QgisFeedDialog()
+        """Wyświetla dialog wyboru branży dla QGIS Feed."""
+        dialog = QgisFeedDialog(self.iface.mainWindow())
+        dialog.exec()
 
-        if self.qgisfeed_dialog.exec() == QDialog.Accepted:
-            self.selected_branch = self.qgisfeed_dialog.comboBox.currentText()
-            self.settings.setValue("selected_industry", self.selected_branch, 
-                QgsSettings.NoSection)
-            self.settings.setValue("showDialog", False, QgsSettings.NoSection)
+        self.selected_branch = self.settings.value("selected_industry", None)
+
+        if self.selected_branch in INDUSTRIES.values():
+            self.settings.setValue("showDialog", False)
             self.settings.sync()
 
     def openInputFile(self):
@@ -520,7 +614,7 @@ class GeokodowanieAdresow:
                         continue
 
                 # Tworzy obiekt geokodowania do menedżera zadań.
-                task = Geokodowanie(
+                self.task = Geokodowanie(
                     parent = self,
                     rekordy = self.rekordy, 
                     miejscowosci = miejscowosci, 
@@ -530,9 +624,9 @@ class GeokodowanieAdresow:
                     delimeter = self.delimeter, 
                     iface = self.iface,
                 )
-                self.taskManager.addTask(task)
+                self.task.finishedProcessing.connect(self.geokodowanieSukces)
+                self.taskManager.addTask(self.task)
                 self.dlg.btnGeokoduj.setEnabled(False)
-            task.finishedProcessing.connect(self.geokodowanieSukces)
     
 
     def korektaFormatu(self, numer):
@@ -607,6 +701,7 @@ class GeokodowanieAdresow:
             stop (bool): Flaga wskazująca, czy proces geokodowania został zatrzymany.
         """
         warstwy = [self.warstwaPoint, self.warstwaLine, self.warstwaPoly]
+        self.task = None
         self.dlg.btnGeokoduj.setEnabled(True)
         self.warstwaPoint.dataProvider().addFeatures(featuresPoint)
         self.warstwaLine.dataProvider().addFeatures(featuresLine)
