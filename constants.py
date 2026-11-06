@@ -21,8 +21,8 @@ REP = {
     "Al.": "Aleje", 
     "Pl.": "Plac", 
     "pl.": "plac", 
-    "ul.":"", 
-    "Ul.":""
+    "ul.": "", 
+    "Ul.": ""
 }
 
 GUGIK = "https://services.gugik.gov.pl/uug/?"

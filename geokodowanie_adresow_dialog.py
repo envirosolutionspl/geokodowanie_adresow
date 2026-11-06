@@ -53,7 +53,7 @@ class GeokodowanieAdresowDialog(QtWidgets.QDialog, FORM_CLASS):
         """Constructor."""
         super(GeokodowanieAdresowDialog, self).__init__(parent)
         self.setupUi(self)
-        px = QPixmap(16,16)
+        px = QPixmap(16, 16)
         px.fill(Qt.GlobalColor.transparent)
         self.setWindowIcon(QIcon(px))
         self.header_container = None

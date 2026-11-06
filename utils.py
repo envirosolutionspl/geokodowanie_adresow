@@ -18,7 +18,7 @@ class NotifyTools:
         self.iface.messageBar().pushMessage(
             'Sukces',
             message,
-            level=Qgis.Success,
+            level=Qgis.MessageLevel.Success,
             duration=10
         )
 
@@ -26,7 +26,7 @@ class NotifyTools:
         self.iface.messageBar().pushMessage(
             'Informacja',
             message,
-            level=Qgis.Info,
+            level=Qgis.MessageLevel.Info,
             duration=10
         )
 
@@ -34,7 +34,7 @@ class NotifyTools:
         self.iface.messageBar().pushMessage(
             'Ostrzeżenie',
             message,
-            level=Qgis.Warning,
+            level=Qgis.MessageLevel.Warning,
             duration=10
         )
 
@@ -42,49 +42,41 @@ class NotifyTools:
         self.iface.messageBar().pushMessage(
             'Błąd',
             message,
-            level=Qgis.Critical,
+            level=Qgis.MessageLevel.Critical,
             duration=10
         )
+    
     @staticmethod
     def pushLogInfo(message: str) -> None:
-        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.Info)
+        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.MessageLevel.Info)
 
     @staticmethod
     def pushLogWarning(message: str) -> None:
-        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.Warning)
+        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.MessageLevel.Warning)
 
     @staticmethod
     def pushLogCritical(message: str) -> None:
-        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.Critical)
+        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.MessageLevel.Critical)
 
     @staticmethod
     def pushLogSuccess(message: str) -> None:
-        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.Success)
+        QgsMessageLog.logMessage(message, tag=PLUGIN_NAME, level=Qgis.MessageLevel.Success)
 
 
 class NetworkTools:
-    # --- HELPERY DLA Qt5 / Qt6 ---
 
     @staticmethod
     def getUAHeader():
-        """Zwraca UserAgentHeader dla Qt5/Qt6."""
-        if hasattr(QNetworkRequest, 'KnownHeaders'):
-            return QNetworkRequest.KnownHeaders.UserAgentHeader # Qt6
-        return QNetworkRequest.UserAgentHeader # Qt5
+        return QNetworkRequest.KnownHeaders.UserAgentHeader  # Qt6
 
     @staticmethod
     def getNetworkNoError():
-        """Zwraca NetworkNoError dla Qt5/Qt6."""
-        if hasattr(QNetworkReply, 'NetworkError'):
-            return QNetworkReply.NetworkError.NoError # Qt6
-        return QNetworkReply.NoError # Qt5
+        return QNetworkReply.NetworkError.NoError
     
     @staticmethod
     def getHttpStatusAttr():
-        """Zwraca HttpStatusCodeAttribute dla Qt5/Qt6."""
-        if hasattr(QNetworkRequest, 'Attribute'):
-            return QNetworkRequest.Attribute.HttpStatusCodeAttribute # Qt6
-        return QNetworkRequest.HttpStatusCodeAttribute # Qt5
+        return QNetworkRequest.Attribute.HttpStatusCodeAttribute
+
 
     @staticmethod
     def patchQtCompatibility():

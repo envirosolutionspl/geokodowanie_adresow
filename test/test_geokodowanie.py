@@ -3,12 +3,6 @@
 import unittest
 import os
 import sys
-from unittest.mock import MagicMock
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-plugin_dir = os.path.dirname(current_dir)
-plugins_dir = os.path.dirname(plugin_dir)
-sys.path.insert(0, plugins_dir)
 
 from geokodowanie_adresow.geokodowanie_adresow import GeokodowanieAdresow
 from geokodowanie_adresow.utils import NetworkTools
@@ -23,6 +17,11 @@ from qgis.PyQt.QtCore import QUrl, QEventLoop
 from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from unittest.mock import MagicMock, patch
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+plugin_dir = os.path.dirname(current_dir)
+plugins_dir = os.path.dirname(plugin_dir)
+sys.path.insert(0, plugins_dir)
+
 NetworkTools.patchQtCompatibility()
 
 # --- MOCKI POMOCNICZE ---
@@ -34,8 +33,10 @@ class MockMessageBar:
 class MockIface:
     def mainWindow(self):
         return MagicMock()
+
     def addToolBar(self, name):
         return MagicMock()
+
     def messageBar(self):
         return MockMessageBar()
 
@@ -90,7 +91,7 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         reply = self.network_manager.get(request)
         reply.finished.connect(loop.quit)
         loop.exec()
-        error_val = reply.error()
+        # error_val = reply.error()
         
         request.setHeader(
             NetworkTools.getUAHeader(), f"QGIS-Test-{PLUGIN_NAME}"
@@ -168,8 +169,8 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         self.assertTrue(worker_result, "Worker zwrócił False")
         
         total_found = len(created_task.featuresPoint) + \
-                      len(created_task.featuresLine) + \
-                      len(created_task.featuresPoly)
+            len(created_task.featuresLine) + \
+            len(created_task.featuresPoly)
                       
         print(
             f"Zgeokodowano: {total_found}/{len(created_task.rekordy)} obiektów."
@@ -185,8 +186,6 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
             len(created_task.bledne), 0, "Znaleziono błędne adresy."
         )
 
+
 if __name__ == "__main__":
     unittest.main()
-
-
-
