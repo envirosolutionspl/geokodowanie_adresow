@@ -733,7 +733,6 @@ class GeokodowanieAdresow:
             self.notify_tools.pushMessage(msg)        
         # Wyświetlenie komunikatu, jeśli są błędne adresy lub żaden adres nie został zgeokodowany
         elif bledne or iloscZgeokodowanych == 0:
-            # iloscBledow = len(bledne)
             bledne.insert(
                 0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n"
             )

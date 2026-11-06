@@ -2,8 +2,6 @@
 
 import unittest
 import os
-import sys
-
 from geokodowanie_adresow.geokodowanie_adresow import GeokodowanieAdresow
 from geokodowanie_adresow.utils import NetworkTools
 from geokodowanie_adresow.constants import CSV_URL
@@ -18,10 +16,6 @@ from qgis.PyQt.QtNetwork import QNetworkRequest, QNetworkReply
 from unittest.mock import MagicMock, patch
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-plugin_dir = os.path.dirname(current_dir)
-plugins_dir = os.path.dirname(plugin_dir)
-sys.path.insert(0, plugins_dir)
-
 NetworkTools.patchQtCompatibility()
 
 # --- MOCKI POMOCNICZE ---
@@ -91,7 +85,6 @@ class TestGeokodowanieIntegrated(unittest.TestCase):
         reply = self.network_manager.get(request)
         reply.finished.connect(loop.quit)
         loop.exec()
-        # error_val = reply.error()
         
         request.setHeader(
             NetworkTools.getUAHeader(), f"QGIS-Test-{PLUGIN_NAME}"
