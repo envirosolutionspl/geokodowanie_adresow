@@ -73,7 +73,8 @@ class QgisFeed:
 
             if 'cache' in key:
                 check_fetch = self.checkIsFetchTime()
-                if check_fetch is True: self.s.remove(key)
+                if check_fetch is True: 
+                    self.s.remove(key)
 
         self.s.sync()
         self.s.beginGroup(f"app/news-feed/items/{self.industry_url_short}")
@@ -109,7 +110,8 @@ class QgisFeed:
         """
 
         check_fetch = self.checkIsFetchTime()
-        if check_fetch is True: self.removeDismissed()
+        if check_fetch is True: 
+            self.removeDismissed()
         self.parser.fetch()
 
 
