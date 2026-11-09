@@ -40,7 +40,7 @@ from . import encoding
 from os import path
 import re
 import os
-from .resources import *
+from .resources import *  # noqa: F403
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
 from .qgis_feed import QgisFeedDialog
 from .geokoder import Geokodowanie
@@ -98,8 +98,7 @@ class GeokodowanieAdresow:
             # Declare instance attributes
             self.actions = []
             self.menu = self.tr(u'&EnviroSolutions')
-            self.toolbar = self.iface.mainWindow().findChild(QToolBar, 
-                'EnviroSolutions')
+            self.toolbar = self.iface.mainWindow().findChild(QToolBar, 'EnviroSolutions')
 
             if not self.toolbar:
                 self.toolbar = self.iface.addToolBar(u'EnviroSolutions')
@@ -136,7 +135,7 @@ class GeokodowanieAdresow:
             status_tip=None,
             whats_this=None,
             parent=None
-        ):
+    ):
         """Dodaj ikonę narzędzi do paska narzędzi.
 
         :param icon_path: Ścieżka do ikony dla tej akcji. Może być ścieżką 
@@ -248,7 +247,7 @@ class GeokodowanieAdresow:
             self.dock.hide()
             return
 
-        if self.first_start == True:
+        if self.first_start:
             self.first_start = False
             self.dlg.qfwInputFile.fileChanged.connect(self.openInputFile)
             self.dlg.qfwOutputFile.fileChanged.connect(self.saveOutputFile)
@@ -276,7 +275,7 @@ class GeokodowanieAdresow:
         
         connection = self.checkInternetConnection()
         if not connection:
-            msg = f"Brak połączenia z internetem lub usługa GUGiK jest niedostępna."
+            msg = "Brak połączenia z internetem lub usługa GUGiK jest niedostępna."
             self.notify_tools.pushWarning(msg) 
             self.notify_tools.pushLogWarning(msg)
             return
@@ -412,8 +411,7 @@ class GeokodowanieAdresow:
         self.dlg.cbxKod.clear()
 
         if self.isInputFile:
-            with open(self.inputPlik, 'r', 
-                encoding=self.dlg.cbxEncoding.currentText()) as plik:
+            with open(self.inputPlik, 'r', encoding=self.dlg.cbxEncoding.currentText()) as plik:
                 try:
                     naglowki = plik.readline()
                 except UnicodeDecodeError:
@@ -444,7 +442,7 @@ class GeokodowanieAdresow:
             idUlica, 
             idNumer, 
             idKod
-        ):
+    ):
         """Sprawdzenie poprawności CSV"""
         for rekord in rekordy:
             wartosci = rekord.strip().split(self.delimeter)
@@ -471,7 +469,7 @@ class GeokodowanieAdresow:
             self, 
             headings, 
             hasHeadings=True
-        ):
+    ):
         """
         Tworzy pustą warstwę wektorową.
 
@@ -493,14 +491,14 @@ class GeokodowanieAdresow:
                 fields += "&field=pole%i:string(0,-1)" % (i + 1)
 
         warstwaPoint = QgsVectorLayer(
-            f"Point?crs=EPSG:{EPSG}" + fields
-            , "zgeokodowane lokalizacje", "memory")
+            f"Point?crs=EPSG:{EPSG}" + fields, 
+            "zgeokodowane lokalizacje", "memory")
         warstwaLine = QgsVectorLayer(
-            f"LineString?crs=EPSG:{EPSG}" + fields
-            , "zgeokodowane ulice", "memory")
+            f"LineString?crs=EPSG:{EPSG}" + fields, 
+            "zgeokodowane ulice", "memory")
         warstwaPoly = QgsVectorLayer(
-            f"Polygon?crs=EPSG:{EPSG}" + fields
-            , "zgeokodowane place", "memory")
+            f"Polygon?crs=EPSG:{EPSG}" + fields, 
+            "zgeokodowane place", "memory")
 
         return warstwaPoint, warstwaLine, warstwaPoly
 
@@ -543,7 +541,7 @@ class GeokodowanieAdresow:
             return
         # Sprawdza, czy wybrano miejscowość, jeśli nie, informuje użytkownika
         elif not idMiejscowosc:
-            msg = f"Nie wybrano miejscowości."
+            msg = "Nie wybrano miejscowości."
             self.notify_tools.pushMessage(msg) 
         else:
             miejscowosci = []
@@ -552,9 +550,9 @@ class GeokodowanieAdresow:
             kody = []
 
             with open(
-                self.inputPlik, 'r', \
+                self.inputPlik, 'r',
                 encoding=self.dlg.cbxEncoding.currentText()
-                ) as plik:
+                    ) as plik:
                 
                 try:
                     zawartosc = plik.readlines()
@@ -567,18 +565,18 @@ class GeokodowanieAdresow:
                 if self.dlg.cbxFirstRow.isChecked():
                     self.rekordy = zawartosc[1:]
                     self.warstwaPoint, self.warstwaLine, self.warstwaPoly = \
-                    self.createEmptyLayer(
-                        headings=naglowki, 
-                        hasHeadings=True
-                    )
+                        self.createEmptyLayer(
+                            headings=naglowki, 
+                            hasHeadings=True
+                        )
                 else:
                     self.rekordy = zawartosc[:]
                     self.rekordy[0] = self.rekordy[0][1:]
                     self.warstwaPoint, self.warstwaLine, self.warstwaPoly = \
-                    self.createEmptyLayer(
-                        headings=naglowki, 
-                        hasHeadings=False
-                    )
+                        self.createEmptyLayer(
+                            headings=naglowki, 
+                            hasHeadings=False
+                        )
 
                 # sprawdzenie czy plik CSV jest poprawny
                 if not self.csvCheck(self.rekordy, idMiejscowosc, idUlica, idNumer, idKod):
@@ -608,21 +606,21 @@ class GeokodowanieAdresow:
                         )
 
                     except Exception as e:
-                        msg  = f"Błąd przetwarzania rekordu {str(e)}"
+                        msg = f"Błąd przetwarzania rekordu {str(e)}"
                         self.notify_tools.pushCritical(msg)
                         self.notify_tools.pushLogCritical(msg)
                         continue
 
                 # Tworzy obiekt geokodowania do menedżera zadań.
                 self.task = Geokodowanie(
-                    parent = self,
-                    rekordy = self.rekordy, 
-                    miejscowosci = miejscowosci, 
-                    ulicy = ulicy, 
-                    numery = numery, 
-                    kody = kody,
-                    delimeter = self.delimeter, 
-                    iface = self.iface,
+                    parent=self,
+                    rekordy=self.rekordy, 
+                    miejscowosci=miejscowosci,
+                    ulicy=ulicy, 
+                    numery=numery, 
+                    kody=kody,
+                    delimeter=self.delimeter,
+                    iface=self.iface,
                 )
                 self.task.finishedProcessing.connect(self.geokodowanieSukces)
                 self.taskManager.addTask(self.task)
@@ -688,7 +686,7 @@ class GeokodowanieAdresow:
                 featuresPoly, 
                 bledne, 
                 stop
-        ):
+    ):
         """
         Funkcja przetwarza wyniki geokodowania, dodając je do odpowiednich warstw
         w QGIS, aktualizując te warstwy oraz wyświetlając odpowiednie komunikaty.
@@ -735,7 +733,6 @@ class GeokodowanieAdresow:
             self.notify_tools.pushMessage(msg)        
         # Wyświetlenie komunikatu, jeśli są błędne adresy lub żaden adres nie został zgeokodowany
         elif bledne or iloscZgeokodowanych == 0:
-            iloscBledow = len(bledne)
             bledne.insert(
                 0, "Miejscowość,Ulica,Numer Porządkowy,Kod Pocztowy \n"
             )
@@ -821,4 +818,3 @@ class GeokodowanieAdresow:
             self.notify_tools.pushCritical(msg)
             self.notify_tools.pushLogCritical(msg) 
             return False
-

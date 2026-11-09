@@ -20,7 +20,7 @@ class Geokodowanie(QgsTask):
     finishedProcessing = pyqtSignal(list, list, list, list, bool)
 
     def __init__(self, parent, rekordy, miejscowosci, ulicy, numery, kody, delimeter, iface):
-        super().__init__("Geokodowanie", QgsTask.CanCancel)
+        super().__init__("Geokodowanie", QgsTask.Flag.CanCancel)
         self.iface = iface
         self.parent = parent
         self.notify_tools = NotifyTools(self.iface)
@@ -93,11 +93,11 @@ class Geokodowanie(QgsTask):
                         feat.setGeometry(geom)
                         feat.setAttributes(wartosci)
                         geometry_type = feat.geometry().type()
-                        if geometry_type == QgsWkbTypes.PointGeometry:
+                        if geometry_type == QgsWkbTypes.GeometryType.PointGeometry:
                             self.featuresPoint.append(feat)
-                        elif geometry_type == QgsWkbTypes.LineGeometry:
+                        elif geometry_type == QgsWkbTypes.GeometryType.LineGeometry:
                             self.featuresLine.append(feat)
-                        elif geometry_type == QgsWkbTypes.PolygonGeometry:
+                        elif geometry_type == QgsWkbTypes.GeometryType.PolygonGeometry:
                             self.featuresPoly.append(feat)
                         unique_geometries.add(geom_wkt)
 
@@ -163,7 +163,7 @@ class Geokodowanie(QgsTask):
             # Sprawdzenie czy zapytanie się nie powiodło
             if reply.error() != QNetworkReply.NetworkError.NoError:
                 msg = (
-                    f"Nie udało się połączyć z usługą API."
+                    "Nie udało się połączyć z usługą API."
                 )
                 self.notify_tools.pushLogWarning(msg)
                 self.notify_tools.pushWarning(msg)
@@ -185,7 +185,7 @@ class Geokodowanie(QgsTask):
 
             if not wkt_list:
                 msg = (
-                    f"Nie udało się znaleźć geokodowania adresu."
+                    "Nie udało się znaleźć geokodowania adresu."
                 )
                 self.notify_tools.pushLogWarning(msg)
                 self.notify_tools.pushWarning(msg)
@@ -196,7 +196,7 @@ class Geokodowanie(QgsTask):
 
         except (json.JSONDecodeError, Exception):
             msg = (
-                f"Nie udało się znaleźć geokodowania adresu."
+                "Nie udało się znaleźć geokodowania adresu."
             )
             self.notify_tools.pushLogWarning(msg)
             self.notify_tools.pushWarning(msg)
@@ -205,9 +205,9 @@ class Geokodowanie(QgsTask):
             reply.deleteLater()
 
     def finished(self, result):
-        if not result and self.stop != True:
+        if not result and not self.stop:
             msg = (
-                f"Geokodowanie  nie powiodło się."
+                "Geokodowanie  nie powiodło się."
             )
             self.notify_tools.pushWarning(msg)
             self.notify_tools.pushLogWarning(msg)
