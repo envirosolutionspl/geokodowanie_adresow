@@ -42,10 +42,11 @@ import re
 import os
 from .resources import *  # noqa: F403
 from .geokodowanie_adresow_dialog import GeokodowanieAdresowDialog
-from .qgis_feed import QgisFeedDialog
+from .qgis_feed import EnviroFeedManager
+from .qgis_feed_dialog import QgisFeedDialog
 from .geokoder import Geokodowanie
 
-from .constants import REP, GUGIK, EPSG, DESCRIPTION_LABEL, INDUSTRIES
+from .constants import REP, GUGIK, EPSG, DESCRIPTION_LABEL
 from . import PLUGIN_NAME, PLUGIN_VERSION
 from .utils import NetworkTools, NotifyTools
 
@@ -61,27 +62,11 @@ class GeokodowanieAdresow:
         self.network_toolkit = NetworkTools()
         self.plugin_dir = path.dirname(__file__)
 
+        self.feed_manager = None
         if not is_tested: 
             if Qgis.QGIS_VERSION_INT >= 31000:
-                from .qgis_feed import QgisFeed
-                self.selected_industry = self.settings.value("selected_industry", None)
-                show_dialog = self.settings.value("showDialog", True, type=bool)
-
-                if self.selected_industry not in INDUSTRIES.values():
-                    self.selected_industry = None
-                    show_dialog = True
-
-                if self.selected_industry is None and show_dialog:
-                    self.showBranchSelectionDialog()
-
-                select_indust_session = self.settings.value('selected_industry')
-
-                self.feed = QgisFeed(
-                    self,
-                    selected_industry=select_indust_session, 
-                    plugin_name=PLUGIN_NAME
-                )
-                self.feed.initFeed()
+                self.feed_manager = EnviroFeedManager(iface, PLUGIN_NAME, QgisFeedDialog)
+                self.feed_manager.start()
 
         
             locale = QSettings().value('locale/userLocale')[0:2]
@@ -215,6 +200,10 @@ class GeokodowanieAdresow:
 
     def unload(self):
         """Usuwa elementy menu i ikony paska narzędzi z interfejsu QGIS."""
+        if self.feed_manager is not None:
+            self.feed_manager.unload()
+            self.feed_manager = None
+
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr(u'&EnviroSolutions'),
@@ -353,17 +342,6 @@ class GeokodowanieAdresow:
             self.dock.setWidget(self.scroll)
             self.scroll.show()
             self.dlg.show()
-
-    def showBranchSelectionDialog(self):
-        """Wyświetla dialog wyboru branży dla QGIS Feed."""
-        dialog = QgisFeedDialog(self.iface.mainWindow())
-        dialog.exec()
-
-        self.selected_branch = self.settings.value("selected_industry", None)
-
-        if self.selected_branch in INDUSTRIES.values():
-            self.settings.setValue("showDialog", False)
-            self.settings.sync()
 
     def openInputFile(self):
         """
